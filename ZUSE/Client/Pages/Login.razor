@@ -1,0 +1,115 @@
+﻿@page "/{Class}/{Topic}/{OrderDate}/{language}/login"
+
+@inject IJSRuntime js
+
+@using ZUSE.Shared;
+@using ZUSE.Client.Models;
+
+<div class="container">
+    <div class="login">
+        <h6 id="order_reference_input_instruction">
+        </h6>
+        <input @bind="OrderNumber"
+               maxlength="10"
+               placeholder=@WaitingCustomer.SelectedLang.OrderReferencePlaceHolder>
+
+        <button type="submit" @onclick="OnEnterOrderReference">
+            @WaitingCustomer.SelectedLang.EnterOrderReferenceButton
+        </button>
+        <h6>
+            <br />
+            @WaitingCustomer.SelectedLang.greeting_instruction
+        </h6>
+    </div>
+</div>
+
+@code
+{
+    [CascadingParameter]
+    public MainLayout MainLayout { get; set; } = null!;
+    [Parameter]
+    public string Topic { get; set; } = null!;
+    [Parameter]
+    public string language { get; set; } = null!;
+    [Parameter]
+    public string Class { get; set; } = null!;
+    [Parameter]
+    public string OrderDate { get; set; } = null!;
+    @*[Parameter]
+        public string BrowserId { get; set; } = null!;*@
+    public string OrderNumber { get; set; } = null!;
+    public string DebuggingLog { get; set; } = null!;
+
+    [Inject]
+    public NavigationManager NavigationManager { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += (object? sender, LocationChangedEventArgs e) => { StateHasChanged(); };
+
+        if (language.Equals("ar"))
+            WaitingCustomer.SelectedLang = new Arabic(); // TODO reset
+        else
+            WaitingCustomer.SelectedLang = new English(); // TODO reset
+
+        RefreshPageInfo();
+
+        @*if(BrowserId.Equals("BID"))
+            {
+                var browser_id = MainLayout.GetBrowserId();
+                NavigationManager.NavigateTo(NavigationManager.Uri.Replace("BID", browser_id));
+            }*@
+
+
+        StateHasChanged();
+    }
+    public void RefreshPageInfo()
+    {
+        MainLayout.Topic = Topic;
+        MainLayout.PageName = "login";
+    }
+    private bool AllCharsAreASCII(string text)
+    {
+        foreach (var i in text)
+        {
+            var ascii = (int)i;
+            if (ascii > 127 || ascii < 32)
+                return false;
+        }
+        return true;
+    }
+    private void OnEnterOrderReference()
+    {
+        if (OrderNumber is null || OrderNumber.Equals("") || !AllCharsAreASCII(OrderNumber))
+        {
+            RejectInput();
+            return;
+        }
+        AnimateSericeProviderLogo();
+        @*PrepareSound();*@
+        if (OrderDate.Equals("per"))
+        {
+            var date = DateTime.Now.AddHours(1).ToString("yyyy_MM_dd_H:mm");
+            NavigationManager.NavigateTo($"/_/{OrderNumber}/{Class}/{Topic}/{date}/{MainLayout.GetBrowserId()}/{language}/waiting");
+            Console.WriteLine("date: " + date.ToString());
+            return;
+        }
+        NavigationManager.NavigateTo($"/_/{OrderNumber}/{Class}/{Topic}/{OrderDate}/{MainLayout.GetBrowserId()}/{language}/waiting");
+        @*StateHasChanged();*@
+    }
+    public async Task PrepareSound()
+    {
+        await js.InvokeAsync<string>("PrepareAudio", "Notification");
+    }
+    public async Task RejectInput()
+    {
+        await js.InvokeAsync<string>("RejectInput", "order_reference_input_instruction",
+            $"{WaitingCustomer.SelectedLang.OrderReferenceInstruction}");
+    }
+    public async Task AnimateSericeProviderLogo()
+    {
+        await js.InvokeAsync<string>("Animate", "ServiceProviderLogo");
+
+        await js.InvokeAsync<string>("TransilateYUp", "full_body");
+    }
+}

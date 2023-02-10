@@ -1,0 +1,139 @@
+﻿.TvPage {
+    position: static;
+    text-align: center;
+    /*    display: flow;*/
+    font-family: 'Tajawal', sans-serif;
+    color: #f6f3f4;
+    background-color: #1b1c25;
+    width: 100vw;
+    min-height: 100vh;
+}
+
+.WaitingList {
+    column-count: 1;
+    column-gap: 20px;
+    column-rule-style: dotted;
+    column-rule-width: 3px;
+    /*-webkit-columns: 2;
+    -moz-columns: 2;*/
+    background-color: transparent;
+    position: absolute;
+    top: 3vh;
+    right: 7vw;
+    direction: rtl;
+}
+
+.WaitingList h1 {
+/*    column-span: all;*/
+    font-size: 8vw;
+}
+
+.WaitingList li {
+    margin-right: 1px;
+    color: orangered;
+    font-size: 8vw;
+    text-align: center;
+    list-style-type: none;
+}
+.WaitingList li:last-child{
+    animation: glow 0.5s ease-in-out infinite alternate;
+}
+.DoneList {
+    column-count: 2;
+    column-gap: 20px;
+    column-rule-style: dotted;
+    column-rule-width: 3px;
+    font-size: 8vw;
+    position: absolute;
+    left: 0vw;
+    top: 3vh;
+    direction: rtl;
+}
+.DoneList h1 {
+    column-span: all;
+    font-size: 8vw;
+}
+.DoneList li {
+    list-style-type: none;
+    margin-left: 10px;
+    color: greenyellow;
+    font-size: 7vw;
+    text-align: center;
+}
+
+.DoneList li:last-child {
+    list-style-type: none;
+    position: fixed;
+    bottom: 11vh;
+    font-size: 12vw;
+    left: calc(-50vw + 50%);
+    right: calc(-50vw + 50%);
+    margin-left: auto;
+    margin-right: auto;
+    animation: glow 0.5s ease-in-out infinite alternate;
+}
+
+.Unmute {
+    position: fixed;
+    bottom: 2%;
+    left: 25px;
+    width: 120px;
+    height: 30px;
+    background-color: #f6f3f4;
+    border-width: 1px;
+    border-radius: 8px;
+}
+
+.hl {
+    position: fixed;
+    bottom: 15vh;
+    width: 100%;
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+}
+.vl {
+    position: absolute;
+    right: 50%;
+    border-left: 1px solid #f6f3f4;
+    height: 30%;
+}
+
+
+.tathkara_id {
+    position: fixed;
+    bottom: 7px;
+    right: 75px; 
+/*    left: calc(-50vw + 50%);
+    right: calc(-50vw + 50%);
+    margin-left: auto;
+    margin-right: auto;*/
+    font-size: 2vh;
+}
+
+.tathkara_logo {
+    position: fixed;
+    bottom: 5px;
+    right: 10px;
+    width: 100px;
+    height: auto;
+}
+
+.TvSPLogo {
+    position: absolute;
+    bottom: 10px;
+    margin-bottom: 0px;
+    max-width: 10vw;
+    height: auto;
+    left: calc(-50vw + 50%);
+    right: calc(-50vw + 50%);
+    margin-left: auto;
+    margin-right: auto;
+}
+.version {
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    font-size: 2vw;
+    opacity: 0.5;
+}

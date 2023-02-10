@@ -1,0 +1,35 @@
+﻿@page "/{OrderReference}/{Class}/{Topic}/{OrderDate}/{language}/done"
+@using ZUSE.Client.Models;
+
+<h1>
+    @WaitingCustomer.SelectedLang.GoodBye
+</h1>
+
+@code {
+
+    [CascadingParameter]
+    public MainLayout MainLayout { get; set; } = null!;
+    [Parameter]
+    public string Topic { get; set; }
+    [Parameter]
+    public string OrderReference { get; set; }
+    [Parameter]
+    public string Class { get; set; }
+    [Parameter]
+    public string OrderDate { get; set; }
+    [Parameter]
+    public string language { get; set; }
+
+    [Inject]
+    public NavigationManager NavigationManager { get; set; }
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += (object? sender, LocationChangedEventArgs e) => { StateHasChanged(); };
+        MainLayout.Topic = Topic;
+        MainLayout.OrderReference = OrderReference;
+        MainLayout.PageName = "done";
+    }
+
+}
+

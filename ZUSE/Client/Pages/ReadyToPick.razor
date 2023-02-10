@@ -1,0 +1,68 @@
+﻿@page "/{OrderReadyDate}/{Chat}/{OrderReference}/{Class}/{Topic}/{OrderDate}/{language}/ready"
+@inject IJSRuntime js
+@using System.Text.Json
+
+@using ZUSE.Client.Models;
+
+<h1>
+    @WaitingCustomer.SelectedLang.OrderIsReadyToPick
+</h1>
+<h2>
+    @WaitingCustomer.SelectedLang.Since
+    @OrderReadyDate
+</h2>
+<h2>
+    @Chat
+</h2>
+
+<br />
+<img style="width: 20%; height: auto;" class="ReadyToPickLogo" src="like.png" />
+<br />
+<br />
+<button @onclick="OrderHasBeenPicked" type="submit">@WaitingCustomer.SelectedLang.IvePickedMyOrder</button>
+
+@code {
+
+    [CascadingParameter]
+    public MainLayout MainLayout { get; set; } = null!;
+    [Parameter]
+    public string Topic { get; set; }
+    [Parameter]
+    public string Class { get; set; }
+    [Parameter]
+    public string OrderReference { get; set; }
+    [Parameter]
+    public string OrderDate { get; set; }
+    [Parameter]
+    public string language { get; set; }
+    [Parameter]
+    public string OrderReadyDate { get; set; }
+    [Parameter]
+    public string Chat { get; set; }
+
+    [Inject]
+    public NavigationManager NavigationManager { get; set; }
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += (object? sender, LocationChangedEventArgs e) => { StateHasChanged(); };
+        MainLayout.Topic = Topic;
+        MainLayout.OrderReference = OrderReference;
+        MainLayout.PageName = "ready";
+    }
+
+    private void OrderHasBeenPicked()
+    {
+        StopSound();
+        NavigationManager.NavigateTo($"/{OrderReference}/{Class}/{Topic}/{OrderDate}/{language}/done");
+        @*StateHasChanged();*@
+
+    }
+
+    public async Task StopSound()
+    {
+        await js.InvokeAsync<string>("StopAudio", "Notification");
+    }
+
+}
+

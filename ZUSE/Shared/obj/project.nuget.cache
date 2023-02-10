@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "t/9TwzgcsDLErcMxQLsjizfao/fBgY3LA20cshWCvq/Vw9ndAbT3IpHfG8Rjo+ZwNMzQAQztIWaXyJuMaE3MZg==",
+  "success": true,
+  "projectFilePath": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Shared/ZUSE.Shared.csproj",
+  "expectedPackageFiles": [
+    "/Users/waleed.almarshidi/.nuget/packages/mqttnet/4.1.4.563/mqttnet.4.1.4.563.nupkg.sha512",
+    "/Users/waleed.almarshidi/.nuget/packages/mqttnet.extensions.managedclient/4.1.4.563/mqttnet.extensions.managedclient.4.1.4.563.nupkg.sha512"
+  ],
+  "logs": []
+}

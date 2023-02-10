@@ -1,0 +1,39 @@
+﻿@using ZUSE.Shared.Models;
+
+<div class="summaryView">
+    <h3 style="text-align: center;">
+        SUMMARY
+    </h3>
+    <br />
+    @foreach (var session in sessions.sessions)
+    {
+
+        <div class="singleSummary">
+            @session.quantity
+            x
+            @session.productName
+        </div>
+    }
+    <hr />
+    @foreach (var pair in sessions.orderTypeQuantitty)
+    {
+
+        <div class="singleSummary">
+            @pair.Value
+            x
+            @pair.Key
+        </div>
+    }
+</div>
+
+@code {
+    private int currentCount = 0;
+    [Parameter]
+    public SummerizedKdsSessions sessions { get; set; }
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}
+

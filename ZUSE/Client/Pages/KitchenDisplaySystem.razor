@@ -1,0 +1,1321 @@
+﻿@page  "/{BusinessReference}/{Topic}/{ScreenNumber:int}/{OrderMakingTimeMinutesThreshold:int}/{Strict:bool}/{IsCompletionApprovalScreen:bool}/kds"
+@page  "/{Topic}/{ScreenNumber:int}/{OrderMakingTimeMinutesThreshold:int}/{Strict:bool}/{IsCompletionApprovalScreen:bool}/kds"
+
+@layout EmptyLayout
+@using ZUSE.Shared.Models;
+@using ZUSE.Client.Models;
+@inject IJSRuntime js
+@using System.Text;
+@using System.Net;
+@using ZUSE.Shared;
+@using System.Text.Json;
+@inject HttpClient Http
+@inject Blazored.LocalStorage.ISyncLocalStorageService localStorage
+@using System.Net;
+@using System.Linq
+@using ZUSE.Client.Pages.KDS
+
+<audio muted id="AudioElement" type="audio/wav">
+    Your browser does not support the audio tag.
+</audio>
+<body>
+    @if (!Strict)
+    {
+        <div class="controlBar">
+            <div style="display: flex; flex-direction: row; column-gap: 5px;">
+                <p>
+                    @filteredSessions.Count of @GetCountOfOrders()
+                    @*<br />*@
+                </p>
+                <p style="color: rgb(240,85,85) ">
+                    @("." + GetLateOrdersCount())
+                </p>
+            </div>
+            @foreach (var setting in settings.list)
+            {
+                @if (setting is not null && setting.fullOptions.data is not null)
+                {
+                    <div class="categoriesFilterDropDown" @onclick="LoadNewNotificationAlert">
+                        <p>
+
+                        </p>
+                        @setting.name
+                        <div class="categoriesFilterSelescted">
+                            @foreach (var option in setting.fullOptions.data)
+                            {
+                                @*<input type="checkbox" id="@category" />*@
+                                if (setting.filter.Contains(option.name))
+                                {
+                                    <label class="selectedText" @onclick="() => OnSettingsSelect(setting, option.name)">@option.name</label>
+                                }
+                                else
+                                {
+                                    <label class="unselectedText" @onclick="() => OnSettingsSelect(setting, option.name)">@option.name</label>
+                                }
+                                <br />
+                            }
+                        </div>
+                    </div>
+                }
+            }
+
+
+            <div class="controlBarContentContainer"
+                 @onclick="OnRecallClicked">
+                <p class="controlbarItemTitle">
+                    RECALL
+                </p>
+                <img src=@GetRecallIconColor() />
+            </div>
+
+            <div class="controlBarContentContainer" @onclick="OnSummaryModeEnabled">
+                <p class="controlbarItemTitle">
+                    Summary
+                </p>
+
+                <img src=@GetSummaryIcon() />
+            </div>
+            <div class="controlBarContentContainer">
+
+                <p style="color: @GetTypeFilterBgColor(2);">
+                    PICKUP
+                </p>
+                <img src=@GetOrderTypeIcon(2, true)
+                     @onmousedown="() => OnViewSelect(2)" />
+
+                <p style="color: @GetTypeFilterBgColor(3);">
+                    DELIVERY
+                </p>
+                <img src=@GetOrderTypeIcon(3, true)
+                     @onmousedown="() => OnViewSelect(3)" />
+
+                <p style="color: @GetTypeFilterBgColor(1);">
+                    DINE IN
+                </p>
+                <img src=@GetOrderTypeIcon(1, true)
+                     @onmousedown="() => OnViewSelect(1)" />
+
+                <p style="color: @GetTypeFilterBgColor(4);">
+                    DRIVE THRU
+                </p>
+                <img src=@GetOrderTypeIcon(4, true)
+                     @onmousedown="() => OnViewSelect(4)" />
+            </div>
+            <h2 style="position:fixed; color: rgba(0, 0, 0, 0.25); bottom: 0px; left: 5px;">V3.81</h2>
+
+            <img @ondblclick="OnStringModeToggle" class="ZUSE_logo" src="loading.png" />
+        </div>
+    }
+
+    <CardsVeiw sessions="@filteredSessions"
+               categsFilter="CategoryFilters"
+               tablesFilter="tablesFilter"
+               OnDoubleClick="OnDoubleClick"
+               OnOrderDetailMouseUp="OnOrderDetailMouseUp">
+
+    </CardsVeiw>
+    @if (!isServiceProviderFound)
+    {
+            <ServiceProviderNotFoundView>
+            </ServiceProviderNotFoundView>
+    }
+    @if(isConnectionIdUsed)
+    {
+            <InvalidConnectionIdView id="ScreenNumber">
+            </InvalidConnectionIdView>
+    }
+    @if (InSummaryMode)
+    {
+        <SummaryView sessions="summary">
+
+        </SummaryView>
+    }
+</body>
+
+
+@code {
+
+    [Parameter]
+    public string Topic { get; set; } = null!;
+    @*[Parameter]
+        public string Categories { get; set; } = null!;*@
+    [Parameter]
+    public bool Strict { get; set; }
+    [Parameter]
+    public string BusinessReference { get; set; } = null!;
+    [Parameter]
+    public int ScreenNumber { get; set; }
+    [Parameter]
+    public bool IsCompletionApprovalScreen { get; set; }
+    [Parameter]
+    public int OrderMakingTimeMinutesThreshold { get; set; }
+
+    public bool inStrictMode { get; set; }
+    public string inStrictModeStorageKey { get; set; } = "_inStrictMode";
+    public List<KdsSession> orders { get; set; }
+    public List<KdsSession> filteredSessions { get; set; }
+    public List<KdsSession> cachedSessions;
+    public List<KdsSession> partiallyDoneSessions;
+    public SummerizedKdsSessions summary { get; set; } = new();
+
+
+    public bool isAudioPrepared { get; set; }
+    public string TimeStampColor { get; set; }
+    public ZUSEClient serviceProviderInfo { get; set; }
+    public string noFilter { get; set; } = "none";
+    public int? deliveryStatusFilter { get; set; } = null;
+    public int completedOrdersCacheCapacity { get; set; } = 203;
+
+    public List<string> CategoryFilters { get; set; } = new();
+
+    public List<string> tablesFilter { get; set; } = new();
+    public List<string> sectionsFilter { get; set; } = new();
+
+    public List<int> orderTypesFilter { get; set; } = new() { 1, 2, 3, 4 };
+    public options categories;
+    public options tables;
+    public options sections { get; set; }
+    private string categoriesStorageKey { get; set; } = "_categories";
+    private string tablesStorageKey { get; set; } = "_tables";
+    private string sectionsStorageKey { get; set; } = "_sections";
+    public bool isServiceProviderFound { get; set; } = true;
+    private string approvalCategoryString { get; set; } = "_approval";
+    public Settings settings { get; set; } = new();
+    public bool isConnectionIdUsed { get; set; } = false;
+    public bool InSummaryMode { get; set; }
+    public bool isFirstBoot { get; set; } = true;
+
+    protected async override void OnInitialized()
+    {
+        orders = new();
+        filteredSessions = new();
+        cachedSessions = new();
+        partiallyDoneSessions = new();
+
+        await RequestSettingsOptions();
+        LoadChachedSessionsToRam();
+        await UserCommunicationPipe.StartConnection(Topic + "/kds",
+        client_id: Topic + ScreenNumber.ToString() + GetBrowserId(), connected: () => { Ping(); },
+        dissconnected: () => { StateHasChanged(); });
+
+        UserCommunicationPipe.AddMsgListener(MsgListener);
+        await UserCommunicationPipe.Subsicribe(Topic + "/kds/patch");
+        await UserCommunicationPipe.Subsicribe(Topic + "/kds/complete");
+
+        await UserCommunicationPipe.Subsicribe(Topic + "/kds/responseToPing");
+
+        System.Timers.Timer timer = new System.Timers.Timer();
+        timer.Interval = 3000;
+        timer.Elapsed += (e, o) => { RefreshKdsUiElements(); };
+        timer.Start();
+
+        RefreshKdsUiElements();
+        BusinessReference = serviceProviderInfo.reference_id;
+        Console.WriteLine("BusinessReference : " + BusinessReference);
+        base.OnInitialized();
+    }
+    private async void Ping()
+    {
+        Console.WriteLine("Ping");
+        var ping = new Ping { id = ScreenNumber };
+        await UserCommunicationPipe.Publish(Topic + "/kds/ping", JsonSerializer.Serialize(ping));
+        await Task.Delay(10000);
+        VerifyThisScreen();
+    }
+    private async void VerifyThisScreen()
+    {
+        if (UserCommunicationPipe.isSubsicribed(Topic + "/kds/ping"))
+            return;
+        await UserCommunicationPipe.UnSubsicribe(Topic + "/kds/responseToPing");
+        await UserCommunicationPipe.Subsicribe(Topic + "/kds/ping");
+    }
+    private void OnStringModeToggle()
+    {
+        inStrictMode = !inStrictMode;
+        localStorage.SetItem<bool>(inStrictModeStorageKey, inStrictMode);
+    }
+    public string GetBrowserId()
+    {
+        string key = "_browser_id";
+        if (!localStorage.ContainKey(key))
+        {
+            var generatedKey = Math.Abs(new Random().NextInt64(1000000, 100000000)).ToString() +
+                 Math.Abs(new Random().NextInt64(1000000, 100000000)).ToString();
+            localStorage.SetItemAsString(key, generatedKey);
+            return generatedKey;
+        }
+        return localStorage.GetItemAsString(key);
+    }
+    private async Task RequestSettingsOptions()
+    {
+        if (Topic is null)
+            return;
+        try
+        {
+            serviceProviderInfo = await Http.GetFromJsonAsync<ZUSEClient>($"service_providers/{Topic}");
+        }
+        catch (JsonException e)
+        {
+            if (serviceProviderInfo is null)
+            {
+                isServiceProviderFound = false;
+                Console.WriteLine("Service provider not found !");
+                return;
+            }
+        }
+
+        if (!string.IsNullOrEmpty(serviceProviderInfo.pos_categories_fetch_url))
+        {
+            categories = await Http.GetFromJsonAsync<options>($"service_providers/categories/{Topic}");
+            settings.Add(new Models.kdsSetting { name = "CATEGS", storageKey = categoriesStorageKey, filter = CategoryFilters, fullOptions = categories });
+        }
+
+        if (!string.IsNullOrEmpty(serviceProviderInfo.tables_fetch_url))
+        {
+            Console.WriteLine("--Tables filtering enabled");
+            tables = await Http.GetFromJsonAsync<options>($"service_providers/tables/{Topic}");
+            settings.Add(new Models.kdsSetting { name = "TABLES", storageKey = tablesStorageKey, filter = tablesFilter, fullOptions = tables });
+        }
+
+        if (!string.IsNullOrEmpty(serviceProviderInfo.sections_fetch_url))
+        {
+            sections = await Http.GetFromJsonAsync<options>($"service_providers/sections/{Topic}");
+            settings.Add(new kdsSetting { name = "SECTIONS", storageKey = sectionsStorageKey, filter = sectionsFilter, fullOptions = sections });
+        }
+
+        ReloadSettings();
+
+    }
+
+    private void OnShowPartialSessionsClicked()
+    {
+        deliveryStatusFilter = 1;
+
+    }
+    private string GetRecallIconColor()
+    {
+        if (deliveryStatusFilter == 2)
+            return "Recall-white.png";
+        return "Recall-black.png";
+    }
+    private void SortCachedSessions()
+    {
+        cachedSessions = cachedSessions.OrderByDescending(cs => cs.closed_at).ToList();
+    }
+    private void LoadChachedSessionsToRam()
+    {
+        var keysCachedSessionsInLocalStorage = localStorage.Keys()
+                .Where(
+                    session =>
+                        !session.StartsWith('_')
+                );
+        foreach (var item in keysCachedSessionsInLocalStorage)
+        {
+            cachedSessions.Add(localStorage.GetItem<KdsSession>(item));
+        }
+        SortCachedSessions();
+    }
+    private string GetSummaryIcon()
+    {
+        return InSummaryMode ? "summary.png" : "summary-black.png";
+    }
+    private void OnSummaryModeEnabled()
+    {
+        InSummaryMode = !InSummaryMode;
+
+        if (!InSummaryMode)
+            return;
+
+        summary.orderTypeQuantitty = new Dictionary<string, int>();
+        var allProductsOfAllSessions = new List<ProductCollection>();
+        summary.sessions.Clear();
+
+        filteredSessions.ForEach(
+                session =>
+                {
+                    session.productsCollection.ForEach(
+                            collection =>
+                            {
+                                var collectionCetegory = collection.product.category.name;
+                                if (CategoryFilters.Contains(collectionCetegory) && !collectionCetegory.StartsWith('_'))
+                                    allProductsOfAllSessions.Add(collection);
+                            }
+                        );
+                    if (!summary.orderTypeQuantitty.ContainsKey(session.ui.orderTypeTitle))
+                        summary.orderTypeQuantitty.Add(session.ui.orderTypeTitle, filteredSessions.Count(s => s.type == session.type));
+                }
+            );
+
+        var distinctCollectionsByProductName = allProductsOfAllSessions.GroupBy(
+                collection =>
+                    collection.product.name
+            ).ToList();
+
+
+        distinctCollectionsByProductName.ForEach(
+                group =>
+                {
+                    var sumOfProductCounts = group.Sum(p => p.quantity);
+                    summary.sessions.Add(
+                            new SingleSummarizedKdsCollection
+                            {
+                                productName = group.Key,
+                                quantity = (int)sumOfProductCounts
+                            }
+                        );
+                }
+            );
+
+        summary.sessions.ForEach(
+                collection =>
+                {
+                    Console.WriteLine("product: " + collection.productName + "count : " + collection.quantity + " options:");
+                }
+
+            );
+        Console.WriteLine("count : " + allProductsOfAllSessions.Count);
+        StateHasChanged();
+    }
+    private void ReloadSettings()
+    {
+        foreach (var setting in settings.list)
+        {
+            if (!localStorage.ContainKey(setting.storageKey))
+            {
+                localStorage.SetItem<List<string>>(setting.storageKey, new());
+            }
+            setting.filter.AddRange(localStorage.GetItem<List<string>>(setting.storageKey));
+            Console.WriteLine("setting name: " + setting.name + " count: " + setting.filter.Count);
+        }
+
+        if (!localStorage.ContainKey(inStrictModeStorageKey))
+            localStorage.SetItem<bool>(inStrictModeStorageKey, false);
+
+        inStrictMode = localStorage.GetItem<bool>(inStrictModeStorageKey);
+
+        if (IsCompletionApprovalScreen)
+        {
+            if (!CategoryFilters.Contains(approvalCategoryString))
+                CategoryFilters.Add(approvalCategoryString);
+        }
+        else
+        if (CategoryFilters.Contains(approvalCategoryString))
+            CategoryFilters.RemoveAll(categoryName => categoryName.Equals(approvalCategoryString));
+        if (!CategoryFilters.Contains(""))
+            CategoryFilters.Add("");
+
+        UpdateFilterOrders();
+    }
+    private void ReloadSelectedCategories()
+    {
+        if (!localStorage.ContainKey(categoriesStorageKey))
+        {
+            localStorage.SetItem<List<string>>(categoriesStorageKey, new());
+        }
+        CategoryFilters.AddRange(localStorage.GetItem<List<string>>(categoriesStorageKey));
+        if (IsCompletionApprovalScreen)
+        {
+            if (!CategoryFilters.Contains(approvalCategoryString))
+                CategoryFilters.Add(approvalCategoryString);
+        }
+        else
+            if (CategoryFilters.Contains(approvalCategoryString))
+            CategoryFilters.RemoveAll(categoryName => categoryName.Equals(approvalCategoryString));
+        if (!CategoryFilters.Contains(""))
+            CategoryFilters.Add("");
+        SaveCategoriesFilterChache();
+    }
+
+    private void OnViewSelect(int type)
+    {
+        if (inStrictMode)
+            return;
+        if (orderTypesFilter.Contains(type))
+        {
+            orderTypesFilter.Remove(type);
+        }
+        else
+        {
+            orderTypesFilter.Add(type);
+        }
+        UpdateFilterOrders();
+        StateHasChanged();
+    }
+    private bool PartiallyDoneSessionsCondition(KdsSession session)
+    {
+        if (deliveryStatusFilter == 2)
+            return true;
+        return !IsAllOrdersCompletedWithinCategoriesFilter(session);
+    }
+    private bool orderIsInSelectedCategs(KdsSession session)
+    {
+        return orderTypesFilter.Any(
+            orderType =>
+
+                CategoryFilters.Any(
+                    category =>
+                        session.productsCollection.Any(
+                            collection =>
+                                            collection.product.category.name.Equals(category)
+                                            &&
+                                            session.type == orderType
+                                    )
+                ||
+                session.combosCollection.Any(
+                    collection =>
+                        collection.products.Any(
+                                combo =>
+                                    combo.product.category.name.Equals(category)
+                                    &&
+                                    session.type == orderType
+                            )
+                    )
+                )
+        );
+    }
+    private bool orderIsInSelectedTables(KdsSession session)
+    {
+        if (tablesFilter.Count == 0 && sectionsFilter.Count == 0 || string.IsNullOrEmpty(session.table_name))
+            return true;
+        var tableName = session.table_name;
+
+        if (tablesFilter.Count != 0 && sectionsFilter.Count != 0)
+        {
+            var tableNameSplitted = tableName.Split(' ');
+            var tableNumber = string.Empty;
+
+            foreach (var split in tableNameSplitted)
+            {
+                if (split.All(char.IsDigit))
+                    tableNumber = split;
+            }
+            Console.WriteLine("sections filter count: " + tableNumber);
+            return tablesFilter.Contains(tableNumber) && sectionsFilter.Any(s => tableName.Contains(s));
+        }
+
+        if (tablesFilter.Count != 0)
+        {
+            return tablesFilter.Any(t => t.Equals(tableName));
+        }
+        return sectionsFilter.Any(s => tableName.Contains(s));
+    }
+    private int GetLateOrdersCount()
+    {
+        return filteredSessions.FindAll(
+                session =>
+                    session.ui.orderCreationTimeAlertAlreadyRevealed == true
+            ).Count;
+    }
+    private bool filtersSatisfied(KdsSession session)
+    {
+        return PartiallyDoneSessionsCondition(session)
+                    &&
+                    orderIsInSelectedTables(session)
+                    &&
+                    orderIsInSelectedCategs(session);
+    }
+    private void UpdateFilterOrders()
+    {
+        var selectedSessions = deliveryStatusFilter == 2 ? cachedSessions : orders;
+
+        filteredSessions = selectedSessions.FindAll
+            (
+                order =>
+                    filtersSatisfied(order)
+            );
+
+        if(deliveryStatusFilter == 2)
+            filteredSessions = filteredSessions.OrderByDescending(order => order.closed_at.GetValueOrDefault()).ToList();
+        else
+            filteredSessions = filteredSessions.OrderBy(order => order.created_at).ToList();
+        RefreshKdsUiElements();
+        StateHasChanged();
+    }
+
+    private string GetCardGridSpan(KdsSession userSession)
+    {
+        int productsCount = 0;
+        var combosSingleProductsWithinCategories = GetAllProductsWithinCategoryFilters(userSession);
+        combosSingleProductsWithinCategories.ForEach( // 0 is the
+            collectionList =>
+                collectionList.ForEach(
+                        collection =>
+                        {
+                            if (collection.options is not null)
+                                productsCount += collection.options.Count;
+                            if (!string.IsNullOrEmpty(collection.kitchen_notes))
+                                productsCount += 1;
+                        }
+                    )
+        );
+        var combosCollectionCount = combosSingleProductsWithinCategories[1].Count;
+        var collectionCount = combosSingleProductsWithinCategories[0].Count;
+
+        productsCount += combosCollectionCount;
+
+        productsCount += collectionCount;
+
+        if (!string.IsNullOrEmpty(userSession.kitchen_notes))
+        {
+            productsCount += 1;
+            //Console.WriteLine("----------------");
+        }
+
+        //Console.WriteLine($"productsCount {userSession.order_number}: " + " com: " + combosCollectionCount + " $: " + collectionCount + " #: " + productsCount);
+
+        if (productsCount > 9)
+            return "span 4";
+
+        if (productsCount > 4)
+            return "span 3";
+
+        if (productsCount > 2)
+            return "span 2";
+
+        return "span 1";
+
+    }
+    private async void PlayOrderCreationTimeLimitReachedIfTrue(KdsSession session)
+    {
+        if (session.ui.orderCreationTimeAlertAlreadyRevealed)
+            return;
+
+        bool isTimeLimitReached = session.ui.orderCreationTimeDifference.TotalMinutes > OrderMakingTimeMinutesThreshold &&
+            session.ui.orderCreationTimeDifference.TotalMinutes < OrderMakingTimeMinutesThreshold + 1;
+
+        if (isTimeLimitReached)
+        {
+            session.ui.orderCreationTimeAlertAlreadyRevealed = true;
+            if (!filtersSatisfied(session))
+                return;
+            await PlaySound("SessionServingTimeLimitReached.mp3");
+        }
+    }
+    private void UpdateSessionsCompletionStatus(KdsSession session)
+    {
+        session.isAllOrdersCompleted = IsAllOrdersCompleted(session);
+        session.isAllOrdersCompletedWithinCategoriesFilter = IsAllOrdersCompletedWithinCategoriesFilter(session);
+        if (session.isAllOrdersCompleted)
+            session.delivery_status = 2;
+        else if (session.isAllOrdersCompletedWithinCategoriesFilter)
+            session.delivery_status = 1;
+    }
+    private void RefreshKdsUiElements()
+    {
+        var selectedSessions = deliveryStatusFilter == 2 ? cachedSessions : orders;
+        selectedSessions.ForEach(
+                async order =>
+                {
+                    order.ui.gridSpan = GetCardGridSpan(order);
+                    order.ui.orderReference_color = GetOrderReferenceColor(order);
+                    order.ui.orderCreationTimeDifference = GetDefferinceInTime(order);
+                    order.ui.orderTypeImgSource = GetOrderTypeIcon(order.type);
+                    order.ui.orderTypeTitle = GetOrderTypeAsString(order.type);
+
+                    order.productsCollection?.ForEach(
+                            collection =>
+                            {
+                                collection.ui.orderDetail_styleClass = GetOrderDetailStageColor(collection.stage.GetValueOrDefault());
+                            }
+                        );
+
+                    order.combosCollection?.ForEach(
+                            combo =>
+                            {
+                                combo.products.ForEach(
+                                        collection =>
+                                        {
+                                            collection.ui.orderDetail_styleClass = GetOrderDetailStageColor(collection.stage.GetValueOrDefault());
+                                        }
+                                    );
+                            }
+                        );
+
+                    order.ui.orderTimeSpan = GetOrderCreationTimeStamp(order);
+                    order.ui.timeStamp_color = GetTimeStampColor(order);
+
+                    if (!(order.isAllOrdersCompletedWithinCategoriesFilter || order.isAllOrdersCompleted))
+                    {
+                        PlayOrderCreationTimeLimitReachedIfTrue(order);
+                    }
+                }
+            );
+
+        StateHasChanged();
+    }
+    private int GetCountOfOrders()
+    {
+        if (deliveryStatusFilter == 2)
+            return cachedSessions.Count;
+        return orders.Count;
+    }
+
+    private string GetTypeFilterBgColor(int type)
+    {
+        return orderTypesFilter.Contains(type) ? "white" : "black";
+    }
+    private void OnTableSelect(string tableName)
+    {
+        if (tablesFilter.Contains(tableName))
+        {
+            tablesFilter.Remove(tableName);
+        }
+        else
+        {
+            tablesFilter.Add(tableName);
+        }
+        SaveCategoriesFilterChache();
+        UpdateFilterOrders();
+    }
+    private void OnSettingsSelect(Models.kdsSetting setting, string filterName)
+    {
+        @*var selection = ((string[])args.Value).Single();*@
+        if (inStrictMode)
+            return;
+        setting.Select(filterName);
+
+        Console.WriteLine("setting name : " + setting.name + " length: " + setting.filter.Count);
+        setting.SaveSettings(localStorage);
+        UpdateFilterOrders();
+    }
+    private void SaveTablesFilterChache()
+    {
+        localStorage.SetItem<List<string>>(tablesStorageKey, tablesFilter);
+    }
+    public void SaveCategoriesFilterChache()
+    {
+        localStorage.SetItem<List<string>>(categoriesStorageKey, CategoryFilters);
+    }
+
+    private List<List<ProductCollection>> GetAllProductsWithinCategoryFilters(KdsSession session)
+    {
+        try
+        {
+            if (session.productsCollection is null || session.combosCollection is null)
+                SerializeProductsToProductsCollection(session);
+
+            var allProductsCollectionWithSelectedCategories = session.productsCollection.FindAll(
+                    collection =>
+                        CategoryFilters.Contains(collection.product.category.name)
+                );
+
+            var allCombosCollectionWithSelectedCategories = new List<ProductCollection>();
+            if (session.combosCollection is not null)
+            {
+                session.combosCollection.ForEach(
+                        combo =>
+                        {
+                            combo.products.ForEach(
+                                    collection =>
+                                    {
+                                        if (combo.products is null)
+
+                                            if (CategoryFilters.Contains(collection.product.category.name))
+                                                allCombosCollectionWithSelectedCategories.Add(collection);
+                                    }
+                                );
+
+                        }
+                    );
+            }
+            return new() { allProductsCollectionWithSelectedCategories, allCombosCollectionWithSelectedCategories };
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("exception in GetAllProductsWithinCategoryFilters: " + e.StackTrace);
+        }
+        return null;
+    }
+
+    private bool IsProductReady(ProductCollection productCollection)
+    {
+        var stage = productCollection.stage;
+        if (stage == productMarks.removed)
+            return true;
+
+        return stage == productMarks.ready;
+    }
+
+    private bool IsAllOrdersCompletedWithinCategoriesFilter(KdsSession userSession)
+    {
+        var combosSingleProductsCollectionWithinCategories = GetAllProductsWithinCategoryFilters(userSession);
+        bool allOrdersCompleted = combosSingleProductsCollectionWithinCategories[1].All(
+                collection =>
+                    IsProductReady(collection)
+            );
+
+        bool allProductsInsideCombosCompleted = combosSingleProductsCollectionWithinCategories[0].All(
+                collection =>
+                    IsProductReady(collection)
+            );
+        return allOrdersCompleted && allProductsInsideCombosCompleted;
+    }
+
+    private bool IsAllOrdersCompleted(KdsSession userSession)
+    {
+        //Console.WriteLine("Combos collection are null : " +
+        bool allOrdersCompleted = (userSession.productsCollection?.All(
+            collection =>
+                IsProductReady(collection)
+        )).GetValueOrDefault();
+
+        bool allCombosProductsCompleted = (userSession.combosCollection?.All(
+                collection =>
+                collection.products.All(
+                            product =>
+                                IsProductReady(product)
+
+                        )
+            )).GetValueOrDefault();
+        return allOrdersCompleted && allCombosProductsCompleted;
+    }
+
+    private string GetOrderReferenceColor(KdsSession session)
+    {
+        //if ()
+        //    return "hsl(100, 100"
+        if (session.isAllOrdersCompleted || session.delivery_status == 2)
+            return "hsl(100, 100%, 67%);";
+        if (session.isAllOrdersCompletedWithinCategoriesFilter)
+            return "hsl(0, 0%, 67%);";
+        return "white";
+    }
+
+    private string GetTimeStampColor(KdsSession session)
+    {
+        var timeSpan = session.ui.orderCreationTimeDifference;
+
+        if (timeSpan.TotalMinutes > OrderMakingTimeMinutesThreshold)
+        {
+            @*TimeStampColor = "rgb(255, 0, 0);";*@
+            return "rgb(240,85,85)";
+        }
+
+        @*TimeStampColor = $"rgb({(int)(160 + 80 * Math.Min(1, timeSpan.TotalMinutes / OrderMakingTimeMinutesThreshold))}," +
+            $"{(int)(85 + 170 * (1 - Math.Min(1, timeSpan.TotalMinutes / OrderMakingTimeMinutesThreshold)))}, 85);" ;*@
+        @*$"{100 - 32.7 * Math.Min(1, timeSpan.TotalMinutes / OrderMakingTimeMinutesThreshold)}%)";*@
+
+        TimeStampColor = $"hsl({(int)(100 * Math.Max(0, 1 - timeSpan.TotalMinutes / OrderMakingTimeMinutesThreshold))}, 100%, 67%);";
+
+        return TimeStampColor;
+    }
+
+    private async void LoadNewNotificationAlert()
+    {
+        Console.WriteLine("LoadNewNotificationAlert");
+        if (isAudioPrepared)
+            return;
+        await PrepareSound();
+        isAudioPrepared = true;
+    }
+    public async Task PrepareSound()
+    {
+        await js.InvokeAsync<string>("PrepareAudio", "AudioElement");
+    }
+
+    private void updateSingleOrderDetialStage(ProductCollection collection)
+    {
+        collection.stage = collection.stage.GetValueOrDefault() == productMarks.ready ? productMarks.normal : productMarks.ready;
+        collection.ui.orderDetail_styleClass = GetOrderDetailStageColor(collection.stage.GetValueOrDefault());
+
+    }
+
+    private async Task OnOrderDetailMouseUp(KdsSession session, ProductCollection collection)
+    {
+        if (collection.stage == productMarks.removed)
+            return;
+        updateSingleOrderDetialStage(collection);
+        UpdateSessionsCompletionStatus(session);
+        RefreshKdsUiElements();
+        session.products = JsonSerializer.Serialize(session.productsCollection);
+        session.combos = JsonSerializer.Serialize(session.combosCollection);
+
+        if (session.isAllOrdersCompleted)
+        {
+            CompleteAnOrder(session);
+            await NotifyServerOfCompletedSession(session);
+            await NotifyAllListenersWithSessionCompletion(session);
+        }
+        else
+            await NotifyAllListenersWithSingleEdit(session);
+        await NotifyAllListenersWithUpdatedOrders();
+    }
+
+    private async Task NotifyAllListenersWithSingleEdit(KdsSession session)
+    {
+        await UserCommunicationPipe.Publish(
+                Topic + "/kds/patch",
+                JsonSerializer.Serialize(
+                        new SingleSessionEdit
+                        {
+                            //data = orders,
+                            data = session,
+                            sender_id = ScreenNumber
+                        }
+                    )
+            );
+    }
+
+    private async Task NotifyAllListenersWithUpdatedOrders()
+    {
+        await UserCommunicationPipe.Publish(
+                Topic + "/kds",
+                JsonSerializer.Serialize(
+                        new KdsSessionsCollection
+                        {
+                            data = orders,
+                            sender_id = ScreenNumber
+                        }
+                    )
+                ,
+                retain: true
+            );
+    }
+    private void MarkAllProductsAsReady(List<ProductCollection> productsCollection)
+    {
+        productsCollection.ForEach(
+                collection =>
+                {
+                    if (CategoryFilters.Contains(collection.product.category.name))
+                        if (collection.stage != productMarks.removed)
+                            collection.stage = productMarks.ready;
+                }
+            );
+    }
+    private void CompleteAnOrder(KdsSession session)
+    {
+        session.delivery_status = 2;
+        if (session.closed_at is null)
+            session.closed_at = DateTime.UtcNow;
+        orders.RemoveAll( s => s.delivery_status == 2);
+        UpdateFilterOrders();
+        CacheUserSession(session);
+    }
+    private async Task NotifyServerOfCompletedSession(KdsSession session)
+    {
+        var data = new StringContent(JsonSerializer.Serialize(session), Encoding.UTF8, "application/json");
+        var respone = await Http.PutAsync($"sessions/close_session", data);
+    }
+    private async Task OnDoubleClick(KdsSession userSession)
+    {
+        MarkAllProductsAsReady(userSession.productsCollection);
+        userSession.combosCollection.ForEach(
+            combo =>
+            {
+            MarkAllProductsAsReady(combo.products);
+                @*product.stage = 1;*@
+            }
+        );
+        userSession.products = JsonSerializer.Serialize(userSession.productsCollection);
+        userSession.combos = JsonSerializer.Serialize(userSession.combosCollection);
+
+        UpdateSessionsCompletionStatus(userSession);
+
+        if (userSession.isAllOrdersCompleted || IsCompletionApprovalScreen)
+        {
+            CompleteAnOrder(userSession);
+            await NotifyAllListenersWithSessionCompletion(userSession);
+            await NotifyServerOfCompletedSession(userSession);
+        }
+        else
+        {
+            await NotifyAllListenersWithSingleEdit(userSession);
+        }
+
+        await NotifyAllListenersWithUpdatedOrders();
+        UpdateFilterOrders();
+        StateHasChanged();
+    }
+    private void UpdatePartiallyDoneSessions()
+    {
+        orders.ForEach(
+                session =>
+                {
+                    if (session.isAllOrdersCompletedWithinCategoriesFilter)
+                        if (!IsSessionCached(session))
+                            partiallyDoneSessions.Add(session);
+                }
+            );
+    }
+    private void CacheUserSession(KdsSession session)
+    {
+        if (localStorage.Length() >= completedOrdersCacheCapacity)
+        {
+            localStorage.RemoveItem(cachedSessions.Last<KdsSession>().id);
+            cachedSessions.Remove(cachedSessions.Last());
+        }
+        if (localStorage.ContainKey(session.id))
+            return;
+        localStorage.SetItem<KdsSession>(session.id, session);
+        cachedSessions.Add(session);
+        SortCachedSessions();
+    }
+    private async Task NotifyAllListenersWithSessionCompletion(KdsSession userSession)
+    {
+        await  UserCommunicationPipe.Publish(
+                 Topic + "/kds/complete",
+                 JsonSerializer.Serialize(
+                         new SingleSessionEdit
+                         {
+                             //data = orders,
+                             data = userSession,
+                             sender_id = ScreenNumber
+                         }
+                     )
+             );
+    }
+    @*private string YeildOverLocalStorageKeys()
+        {
+            foreach (var item in localStorage.Keys())
+                yeild return
+        }*@
+    private void OnRecallClicked()
+    {
+        try
+        {
+            deliveryStatusFilter = deliveryStatusFilter == 2 ? null : 2;
+            if (deliveryStatusFilter == 2)
+            {
+                UpdatePartiallyDoneSessions();
+                cachedSessions.AddRange(partiallyDoneSessions);
+            }
+            else
+            {
+                partiallyDoneSessions.Clear();
+                cachedSessions.Clear();
+                LoadChachedSessionsToRam();
+            }
+
+            cachedSessions = cachedSessions.OrderByDescending(session => session.closed_at.GetValueOrDefault()).ToList();
+            UpdateFilterOrders();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Exception in OnRecallClicked : " + e.Message);
+        }
+    }
+
+    private string GetOrderDetailStageColor(productMarks stage)
+    {
+        switch (stage)
+        {
+            // normalOrderDetail
+            case productMarks.normal:
+                return "normalOrderDetail";
+            // readyOrderDetail
+            case productMarks.ready:
+                return "readyOrderDetail";
+            // removedOrderDetail
+            case productMarks.removed:
+                return "removedOrderDetail";
+            // addedOrderDetail
+            case productMarks.added:
+                return "addedOrderDetail";
+        }
+        return "none";
+    }
+
+    private string GetOrderCreationTimeStamp(KdsSession session)
+    {
+        if (session.delivery_status != 2)
+        {
+            var timeElapsed = session.ui.orderCreationTimeDifference;
+            return ((int)timeElapsed.TotalMinutes) + ":" + timeElapsed.Seconds;
+        }
+        var orderCompletionTime = session.closed_at.GetValueOrDefault().Subtract(session.created_at);
+        return ((int)orderCompletionTime.TotalMinutes) + ":" + orderCompletionTime.Seconds;
+    }
+    private TimeSpan GetDefferinceInTime(KdsSession session)
+    {
+        if (session.delivery_status == 2)
+            return session.closed_at.GetValueOrDefault().Subtract(session.created_at);
+        return DateTime.UtcNow.Subtract(session.created_at);
+    }
+    private string GetOrderDateTime(DateTime created_at)
+    {
+        @*DateTime parsedDate;
+            var date = DateTime.TryParseExact(created_at, "yyyy-M-dd H:mm:ss", null,
+                                              System.Globalization.DateTimeStyles.AdjustToUniversal, out parsedDate);*@
+        return created_at.ToString("hh:mm tt");
+    }
+
+    private string GetOrderTypeIcon(int type, bool callingFromControlBar = false)
+    {
+        var color = "";
+        if (callingFromControlBar)
+            color += "-" + GetTypeFilterBgColor(type);
+        else
+            color += "-black";
+        @*string baseUri = $"https://tathkarastorageaccount.blob.core.windows.net/app-icons/";*@
+        @*baseUri = "";*@
+        switch (type)
+        {
+            case 1:
+                return $"DineIn{color}.png";
+            case 2:
+                return $"TakeAway{color}.png";
+            case 3:
+                return $"FoodDelivery{color}.png";
+            case 4:
+                return $"DriveThru{color}.png";
+        }
+        return "none";
+    }
+
+    private string GetOrderTypeAsString(int type)
+    {
+        switch (type)
+        {
+            case 1:
+                return "DINE IN";
+            case 2:
+                return "PICKUP";
+            case 3:
+                return "DELIVERY";
+            case 4:
+                return "DRIVE T";
+        }
+        return "none";
+    }
+    private KeyValuePair<KdsSession, bool> OrderNotExists(KdsSession userSession)
+    {
+        @*orders.fi
+            foreach (var item in orders)
+            {
+                if(item.id.Equals())
+            }*@
+        var sameOrderId = orders.Find(order => order.id.Equals(userSession.id));
+        return new(sameOrderId, sameOrderId is null);
+    }
+    private void SerializeProductsToProductsCollection(KdsSession session)
+    {
+        try
+        {
+            session.productsCollection = JsonSerializer.Deserialize<List<ProductCollection>>(session.products);
+
+            if (session.combos is null)
+                session.combosCollection = new List<ComboCollection>();
+            else
+                session.combosCollection = JsonSerializer.Deserialize<List<ComboCollection>>(session.combos);
+
+            if (session.productsCollection is null)
+                session.productsCollection = new List<ProductCollection>();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Error in SerializeProductsToProductsCollection : " + e.StackTrace);
+        }
+    }
+    private void SyncUpdatedOrder(KdsSession firstOrder, KdsSession secondOrder)
+    {
+        firstOrder.closed_at = secondOrder.closed_at;
+        if (firstOrder.products is null)
+        {
+            firstOrder.productsCollection = new List<ProductCollection>();
+            Console.WriteLine("products are null in SyncUpdatedOrder");
+            return;
+        }
+        firstOrder.productsCollection = JsonSerializer.Deserialize<List<ProductCollection>>(secondOrder.products);
+        if (firstOrder.combos is null)
+        {
+            firstOrder.combosCollection = new List<ComboCollection>();
+            Console.WriteLine("combos are null in SyncUpdatedOrder");
+            return;
+        }
+        firstOrder.combosCollection = JsonSerializer.Deserialize<List<ComboCollection>>(secondOrder.combos);
+    }
+    private bool IsSessionCached(KdsSession kdsSession)
+    {
+        return cachedSessions.FirstOrDefault(sessoin => sessoin.id.Equals(kdsSession.id)) is not null;
+    }
+    private int CountSessionProducts(KdsSession session)
+    {
+        return session.productsCollection.Count(s => s.product.category.name.StartsWith('_') && s.stage != productMarks.removed);
+    }
+    private bool MarkUpdatedCollectionsAsUpdated(KdsSession newSession, KdsSession existingSession)
+    {
+        //existingSession.productsCollection = newSession.productsCollection;
+        //return true;
+
+        bool orderReallyUpdated = false;
+        var nspCollections = newSession?.productsCollection;
+        var espCollections = existingSession?.productsCollection;
+
+        if (nspCollections is null || espCollections is null)
+            return orderReallyUpdated;
+
+        espCollections.ForEach(
+                esp =>
+                {
+                    if (!esp.product.category.name.StartsWith('_'))
+                    {
+                        var espName = esp.product.name;
+                        if (esp.stage != productMarks.removed)
+                        {
+                            var newSessionProduct = nspCollections.Any(
+                                nsp => nsp.product.name.Equals(espName) &&
+                                    esp.quantity == nsp.quantity
+                            );
+                            if (!newSessionProduct)
+                            {
+                                esp.stage = productMarks.removed;
+                                orderReallyUpdated = true;
+                            }
+                        }
+                    }
+                }
+            );
+        // checking every new product
+        nspCollections?.ForEach(
+                nsp =>
+                {
+                    if(!nsp.product.category.name.StartsWith('_'))
+                    {
+                        var nspName = nsp.product.name;
+                        var existingSessionProduct = espCollections.Any(
+                        esp =>
+                                    esp.stage != productMarks.removed &&
+                                    esp.product.name.Equals(nspName) &&
+                                    esp.quantity == nsp.quantity
+                            );
+                        if (!existingSessionProduct)
+                        {
+                            nsp.stage = productMarks.added;
+                            espCollections.Insert(0, nsp);
+                            orderReallyUpdated = true;
+                        }
+                    }
+
+                }
+            );
+        return orderReallyUpdated;
+    }
+    private async void MsgListener(string topic, string data)
+    {
+        try
+        {
+            //Console.WriteLine(data);
+            if (topic.Equals(Topic + "/kds/ping"))
+            {
+                var pingFrom = JsonSerializer.Deserialize<Ping>(data);
+                var responseToPing = new ResponseToPing { responderId = ScreenNumber, isActive = false };
+                if (pingFrom?.id == ScreenNumber)
+                {
+                    responseToPing.isActive = true;
+                    await UserCommunicationPipe.Publish(Topic + "/kds/responseToPing", msg: JsonSerializer.Serialize(responseToPing));
+                }
+                await UserCommunicationPipe.Publish(Topic + "/kds/responseToPing", msg: JsonSerializer.Serialize(responseToPing));
+                return;
+            }
+            if (topic.Equals(Topic + "/kds/responseToPing"))
+            {
+                //if (!UserCommunicationPipe.isSubsicribed(Topic + "/kds/responseToPing"))
+                //    return;
+                var response = JsonSerializer.Deserialize<ResponseToPing>(data);
+                if (response.responderId == ScreenNumber)
+                {
+                    isConnectionIdUsed = true;
+                    return;
+                }
+                VerifyThisScreen();
+                return;
+            }
+            if (topic.Equals(Topic + "/kds/patch"))
+            {
+                var patchedSession = JsonSerializer.Deserialize<SingleSessionEdit>(data);
+
+                if (patchedSession.sender_id == ScreenNumber)
+                    return;
+                var orderPointerIfAlreadyExists = OrderNotExists(patchedSession.data);
+                if (!orderPointerIfAlreadyExists.Value)
+                {
+                    @*Console.WriteLine("patching " + patchedSession.data.id);*@
+                    SyncUpdatedOrder(orderPointerIfAlreadyExists.Key, patchedSession.data);
+                    UpdateSessionsCompletionStatus(orderPointerIfAlreadyExists.Key); // to put order in RECALL if order is partially done by assembly point screen
+                }
+            }
+            else if (topic.Equals(Topic + "/kds/complete"))
+            {
+                var completedSession = JsonSerializer.Deserialize<SingleSessionEdit>(data);
+
+                if (completedSession.sender_id == ScreenNumber)
+                    return;
+
+                var orderPointerIfAlreadyExists = OrderNotExists(completedSession.data);
+                if (!orderPointerIfAlreadyExists.Value)
+                {
+                    var existingSession = orderPointerIfAlreadyExists.Key;
+                    @*Console.WriteLine("completing: " + completedSession.data.id);*@
+                    SyncUpdatedOrder(existingSession, completedSession.data);
+                    UpdateSessionsCompletionStatus(existingSession);
+                    CompleteAnOrder(completedSession.data);
+                }
+            }
+            else
+            {
+                var newOrdersList = JsonSerializer.Deserialize<KdsSessionsCollection>(data);
+
+                Console.WriteLine("new order list from : " + newOrdersList.sender_id);
+
+
+                if(isFirstBoot)
+                {
+                    orders = newOrdersList.data;
+                    isFirstBoot = false;
+                
+                    RefreshKdsUiElements();
+                    UpdateFilterOrders();
+                    StateHasChanged();
+                    return;
+                }
+                if (orders.Count != 0 && newOrdersList.sender_id == ScreenNumber)
+                    return;
+                KeyValuePair<KdsSession, bool> orderReferenceIfAlreadyExists = new();
+                newOrdersList.data.ForEach(
+                    newOrder =>
+                    {
+                        if (IsSessionCached(newOrder))
+                            return;
+
+                        orderReferenceIfAlreadyExists = OrderNotExists(newOrder);
+                        SerializeProductsToProductsCollection(newOrder);
+                        if (newOrdersList.sender_id == 0)
+                        {
+                            if(orderReferenceIfAlreadyExists.Value)
+                            {
+                                if (filtersSatisfied(newOrder))
+                                    PlaySound("NewOrder.mp3");
+
+                                orders.Add(
+                                        newOrder
+                                    );
+                                UpdateSessionsCompletionStatus(newOrder); // to put partially done orders in RECALL screen when screen refreshes
+                            }
+                            else
+                            {
+                                bool orderReallyUpdated = MarkUpdatedCollectionsAsUpdated(newOrder, orderReferenceIfAlreadyExists.Key);
+                                if (orderReallyUpdated && filtersSatisfied(newOrder))
+                                    PlaySound("OrderUpdated.mp3");
+                            }
+                        }
+                    }
+                );
+                
+            }
+            RefreshKdsUiElements();
+            UpdateFilterOrders();
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"error in msg listener,\ntopic: {topic},\nmsg: {data},\nerror msg: {e.Message}\nerror src: {e.StackTrace}");
+            @*throw e;*@
+        }
+
+    }
+
+    public async Task PlaySound(string soundPath)
+    {
+        await js.InvokeAsync<string>("PlayAudio", "AudioElement", soundPath);
+    }
+}

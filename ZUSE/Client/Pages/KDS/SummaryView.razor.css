@@ -1,0 +1,20 @@
+﻿.summaryView {
+    display: block;
+    /*    grid-template-columns: repeat(3, auto);*/
+    /*    grid-auto-columns: auto auto auto;*/
+    height: 100vh;
+    overflow-x: scroll;
+    width: 300px;
+    background-color: #61234E;
+    position: fixed;
+    right: 0px;
+    box-shadow: 50px 50px 50px 50px rgba(0,0,0,0.6);
+    padding-left: 10px;
+    padding-top: 50px;
+}
+
+.singleSummary {
+    color: white;
+    font-size: x-large;
+    margin: 10px;
+}

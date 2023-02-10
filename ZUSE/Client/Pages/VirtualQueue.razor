@@ -1,0 +1,127 @@
+﻿@page "/{Class}/{Topic}/per/{language}/vq"
+
+@inject IJSRuntime js
+@inject Blazored.LocalStorage.ISyncLocalStorageService localStorage
+@using System.Text.Json
+@using ZUSE.Shared;
+@using ZUSE.Client.Models;
+
+<h3> <br /> </h3>
+<button @onclick="OnQueueOrderRequested">
+    @WaitingCustomer.SelectedLang.VQ_greeting
+</button>
+
+@code {
+    [Parameter]
+    public string Topic { get; set; }
+    [Parameter]
+    public string language { get; set; }
+
+    [Parameter]
+    public string Class { get; set; }
+
+    [CascadingParameter]
+    public MainLayout MainLayout { get; set; }
+
+    public string queue_order { get; set; }
+
+    public string OrderDate { get; set; } = DateTime.Now.AddHours(1).ToString("yyyy-MM-dd HH:mm");
+
+    public string initial_q_ref { get; set; }
+
+    [Inject]
+    public NavigationManager NavigationManager { get; set; }
+
+    public bool is_queue_order_requested { get; set; } = false;
+
+    @*private string GetBrowserId()
+    {
+        string key = "browser_id";
+        if (!localStorage.ContainKey(key))
+            localStorage.SetItemAsString(key, initial_q_ref);
+
+        return localStorage.GetItemAsString(key);
+    }*@
+
+    protected async override void OnInitialized()
+    {
+        initial_q_ref = MainLayout.GetBrowserId();
+        MainLayout.Topic = Topic;
+        UserCommunicationPipe.AddMsgListener(MsgListener);
+        if (language.Equals("ar"))
+            WaitingCustomer.SelectedLang = new Arabic(); // TODO reset
+        else
+            WaitingCustomer.SelectedLang = new English(); // TODO reset
+        NavigationManager.LocationChanged += (object? sender, LocationChangedEventArgs e) => { StateHasChanged(); };
+        Console.Write("browser id: ");
+        Console.WriteLine(initial_q_ref);
+        await UserCommunicationPipe.StartConnection(Topic,
+            initial_q_ref, connected: On_client_connected,
+            dissconnected: () => { StateHasChanged(); });
+    }
+    public async void OnQueueOrderRequested()
+    {
+        is_queue_order_requested = true;
+        if (MainLayout.OrderReference is not null)
+        {
+            @*if (WaitingCustomer.OrderWasCalledAlready)
+                NavigationManager.NavigateTo($"/{DateTime.Now.ToString("h:m tt")}/_/{MainLayout.OrderReference}/{Class}/{Topic}" +
+                $"/{OrderDate}/{language}/ready");*@
+        }
+        string data = JsonSerializer.Serialize(new
+        {
+            order_ref = initial_q_ref,
+            order_date = OrderDate,
+            order_status = "?"
+        });
+        UserCommunicationPipe.Publish(Topic, data);
+
+    }
+    public void On_client_connected()
+    {
+        StateHasChanged();
+    }
+    public async void MsgListener(string topic, string msg)
+    {
+        Console.WriteLine($"received : {msg}");
+
+        if (!is_queue_order_requested)
+            return;
+
+        ToUserPayload? userMsg = JsonSerializer.Deserialize<ToUserPayload>(msg);
+        string Q_order = userMsg.order_reference;
+
+        @*string[] msg_splited = msg.Split('~');
+
+            if (msg_splited.Length < 2)
+                return;*@
+
+        @*string Q_order = msg_splited[1];*@
+
+        if (!Q_order.Equals(""))
+        {
+            Console.WriteLine("All conditions");
+            string data = JsonSerializer.Serialize(new
+            {
+                order_ref = Q_order,
+                order_date = OrderDate,
+                order_status = "new"
+            });
+            UserCommunicationPipe.Publish(Topic, data);
+            UserCommunicationPipe.RemoveMsgListener(MsgListener);
+            //await UserCommunicationPipe.UnSibsicribe($"{Topic}/{initial_q_ref}");
+            await UserCommunicationPipe.Subsicribe($"{Topic}/{Q_order}");
+
+            AnimateSericeProviderLogo();
+            NavigationManager.NavigateTo($"/_/{Q_order}/pro/{Topic}/{DateTime.Now.AddHours(1).ToString("dd:MM:yyyy:H:mm")}/{language}/waiting");
+        }
+    }
+
+    public async Task AnimateSericeProviderLogo()
+    {
+        await js.InvokeAsync<string>("Animate", "ServiceProviderLogo");
+        await js.InvokeAsync<string>("TransilateYUp", "full_body");
+    }
+}
+
+

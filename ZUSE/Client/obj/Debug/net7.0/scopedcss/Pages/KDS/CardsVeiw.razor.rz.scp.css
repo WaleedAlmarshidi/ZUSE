@@ -1,0 +1,274 @@
+:root[b-u2yv1qpd9n] {
+    --officialBgColor: lightslategray;
+    --cardsBgColor: #1b1c25;
+}
+
+body[b-u2yv1qpd9n] {
+    display: flex;
+    flex-direction: row;
+    width: 100vw;
+    min-height: 100vh;
+    color: azure;
+    background-color: #EBFFFB;
+    user-select: none;
+    overflow: auto;
+}
+
+.cardsView[b-u2yv1qpd9n] {
+    display: grid;
+    scroll-snap-type: x mandatory;
+    /*    grid-template-columns: repeat(3, auto);*/
+    /*    grid-auto-columns: auto auto auto;*/
+    grid-auto-flow: column;
+    grid-template-rows: repeat(4, auto);
+    height: 100vh;
+    overflow-x: scroll;
+    width: auto;
+}
+
+.orderCard[b-u2yv1qpd9n] {
+    /*    position: relative;*/
+    scroll-snap-align: center;
+    background-color: #032535;
+    /*    user-select: none;*/
+    border-width: 1px;
+    border-color: white;
+    border-style: solid;
+    border-radius: 11px 11px 20px 20px;
+    width: 27vw;
+    align-self: stretch;
+    margin: 15px;
+    overflow-y: scroll;
+    box-shadow: 5px 5px 5px 5px rgba(0,0,0,0.1);
+}
+
+.orderCardHeader[b-u2yv1qpd9n] {
+    background-color: white;
+    position: relative;
+    color: black;
+    font-size: 2.5vw;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    border-radius: 9px 9px 0px 0px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.orderType[b-u2yv1qpd9n] {
+    display: flow;
+    padding: 0px 0px 1px 10px;
+}
+
+    .orderType img[b-u2yv1qpd9n] {
+        /*    opacity: 0.5;*/
+        /*    margin: 0px 5px 1px 5px;*/
+        /*    position: absolute;
+    left: 60%;*/
+        width: 3.5vw;
+        height: auto;
+    }
+
+.orderCardDetials[b-u2yv1qpd9n] {
+    /*    align-content: start;
+    justify-content: start;*/
+    list-style-type: none;
+    padding-left: 15px;
+    text-align: start;
+    list-style-position: inside;
+    /*    list*/
+    /*    margin: 10px;*/
+    /*    list-style: url('https://tathkarastorageaccount.blob.core.windows.net/service-providers-logos/الشعار مفرغ.png');*/
+}
+
+    .orderCardDetials ul[b-u2yv1qpd9n] {
+        padding-left: 3vw;
+        list-style-position: outside;
+        /*    margin-left: 20px;*/
+    }
+
+        .orderCardDetials ul li[b-u2yv1qpd9n] {
+            color: white;
+        }
+
+.orderDetail[b-u2yv1qpd9n] {
+    color: #F5F5F5;
+    /*    margin-right: 1px;*/
+    /*    direction: rtl;*/
+    font-size: 2vw;
+    margin: 10px 0;
+}
+
+.orderReference[b-u2yv1qpd9n] {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: black;
+    font-size: 3vw;
+    min-width: 50px;
+    /*    padding-left: 5px;*/
+    /*    border-radius: 0px 0px -10px 0px;*/
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+.orderDateTime[b-u2yv1qpd9n] {
+    position: absolute;
+    font-size: 1.5vw;
+    right: 1px;
+    top: 0px;
+}
+
+.orderCreationTimeStamp[b-u2yv1qpd9n] {
+    position: absolute;
+    font-size: 2vw;
+    right: 1px;
+}
+
+.categoriesFilterDropDown[b-u2yv1qpd9n] {
+    /*    position: relative;*/
+    padding-right: 3px;
+    /*    right: 0px;*/
+    /*    display: inline-block;*/
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    overflow-y: scroll;
+}
+
+.categoriesFilterSelescted[b-u2yv1qpd9n] {
+    display: none;
+    overflow: scroll;
+    padding-left: 5px;
+    margin-right: 5px;
+    height: 500px;
+    overflow: scroll;
+}
+
+.categoriesFilterDropDown:hover .categoriesFilterSelescted[b-u2yv1qpd9n] {
+    display: block;
+    /*    flex-direction: row;*/
+    /*    background-color: rgba(255,255,255,0.1);*/
+}
+
+.categoriesFilterDropDownContent button[b-u2yv1qpd9n] {
+    color: white;
+}
+
+.controlBar[b-u2yv1qpd9n] {
+    position: sticky;
+    visibility: visible;
+    right: 0px;
+    top: 0px;
+    padding: 5px;
+    background-color: #61234E;
+    /*background: linear-gradient(180deg, rgba(72,3,173,1) 0%, rgba(0,85,91,1) 45%, rgba(255,255,255,0.9129428742038217) 100%);*/ /*    background-color: white;*/
+    height: 100vh;
+    /*    box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.5);*/
+    width: 9vw;
+}
+
+    .controlBar *[b-u2yv1qpd9n] {
+        margin-bottom: 3vh;
+    }
+
+    .controlBar p[b-u2yv1qpd9n] {
+        margin-bottom: 2px;
+    }
+
+button[b-u2yv1qpd9n] {
+    background-color: transparent;
+    color: white;
+    border-width: 0px;
+}
+
+    button:focus[b-u2yv1qpd9n] {
+        display: block;
+        /*    display: flex;*/
+        background-color: rgba(255,255,255,0.25);
+        border-radius: 5px;
+    }
+
+.orderTypeView[b-u2yv1qpd9n] {
+    border-radius: 5px;
+    align-content: start;
+    padding: 3px;
+    overflow: hidden;
+    background-color: rgba(255,255,255,0.1);
+}
+
+    .orderTypeView *[b-u2yv1qpd9n] {
+        padding-left: 10px;
+    }
+
+    .orderTypeView button[b-u2yv1qpd9n] {
+        position: relative;
+        width: 100%;
+        font-size: small;
+    }
+
+.controlBarContentContainer[b-u2yv1qpd9n] {
+    padding-top: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 5px;
+}
+
+    .controlBarContentContainer img[b-u2yv1qpd9n] {
+        /*        display: block;
+    position: relative;*/
+        width: 30%;
+        height: auto;
+    }
+
+    .controlBarContentContainer p[b-u2yv1qpd9n] {
+        /*    margin-left: 3px;*/
+    }
+
+.selectedText[b-u2yv1qpd9n] {
+    color: white;
+}
+
+.unselectedText[b-u2yv1qpd9n] {
+    color: black;
+}
+
+
+.button[b-u2yv1qpd9n] {
+}
+
+    .button:focus[b-u2yv1qpd9n] {
+    }
+
+    .button:hover[b-u2yv1qpd9n] {
+    }
+
+    .button:active[b-u2yv1qpd9n] {
+    }
+
+    .button:last-child[b-u2yv1qpd9n] {
+    }
+
+    .button:first-child[b-u2yv1qpd9n] {
+    }
+
+#normalOrderDetail[b-u2yv1qpd9n] {
+/*    background-color: black;*/
+    color: rgba(255, 255, 255, 1);
+    /*        background-color: black;*/
+}
+#readyOrderDetail[b-u2yv1qpd9n] {
+    color: rgba(255, 255, 255, 0.5);
+}
+#addedOrderDetail[b-u2yv1qpd9n] {
+    color: hsl(60, 100%, 67%);
+}
+#removedOrderDetail[b-u2yv1qpd9n] {
+    text-decoration: line-through;
+    text-decoration-color: #EBFFFB;
+    text-decoration-thickness: auto;
+}

@@ -1,0 +1,81 @@
+is_global = true
+build_property.TargetFramework = net7.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = false
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = browser
+build_property.RootNamespace = ZUSE.Client
+build_property.RootNamespace = ZUSE.Client
+build_property.ProjectDir = /Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/
+build_property.RazorLangVersion = 7.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = /Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client
+build_property._RazorSourceGeneratorDebug = 
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/App.razor]
+build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/Counter.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ291bnRlci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/Done.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRG9uZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTG9naW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/ReadyToPick.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUmVhZHlUb1BpY2sucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/VirtualQueue.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvVmlydHVhbFF1ZXVlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/Waiting.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvV2FpdGluZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Shared/EmptyLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0VtcHR5TGF5b3V0LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Shared/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL01haW5MYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/KDS/CardsVeiw.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvS0RTL0NhcmRzVmVpdy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-u2yv1qpd9n
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/KDS/InvalidConnectionIdView.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvS0RTL0ludmFsaWRDb25uZWN0aW9uSWRWaWV3LnJhem9y
+build_metadata.AdditionalFiles.CssScope = b-j3cykg7fyt
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/KDS/ServiceProviderNotFoundView.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvS0RTL1NlcnZpY2VQcm92aWRlck5vdEZvdW5kVmlldy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-9kt3yvha3n
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/KDS/SummaryView.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvS0RTL1N1bW1hcnlWaWV3LnJhem9y
+build_metadata.AdditionalFiles.CssScope = b-mr4e0djt00
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/KitchenDisplaySystem.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvS2l0Y2hlbkRpc3BsYXlTeXN0ZW0ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-g6aada8rgd
+
+[/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/Pages/TV.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvVFYucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-b8ilvf9u7q

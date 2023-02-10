@@ -1,0 +1,105 @@
+﻿<Properties GitUserInfo="UsingGIT" StartupConfiguration="{8A69E1B4-A864-4964-B12F-6BE489CBFACE}|Default">
+  <MonoDevelop.Ide.Workbench ActiveDocument="ZUSE/Server/Program.cs">
+    <Files>
+      <File FileName="ZUSE/Client/Pages/KitchenDisplaySystem.razor.css" />
+      <File FileName="ZUSE/Shared/UserCommunicationPipe.cs" />
+      <File FileName="ZUSE/Server/Controllers/SessionsController.cs" />
+      <File FileName="ZUSE/Shared/Models/PosModels/FoodicsOrderNotification.cs" />
+      <File FileName="ZUSE/Server/Managers/UserSessionsManager.cs" />
+      <File FileName="ZUSE/Server/Managers/ServiceProviderManager.cs" />
+      <File FileName="ZUSE/Server/Controllers/OdooController.cs" />
+      <File FileName="ZUSE/Server/Controllers/FoodicsController.cs" />
+      <File FileName="ZUSE/Server/Mappers/OdooMapper.cs" />
+      <File FileName="ZUSE/Shared/Models/TathkaraServiceProvider.cs" />
+      <File FileName="ZUSE/Server/Mappers/FoodicsMapper.cs" />
+      <File FileName="ZUSE/Shared/Models/UserSession.cs" />
+      <File FileName="ZUSE/Client/Pages/Login.razor" />
+      <File FileName="ZUSE/Client/Shared/MainLayout.razor" />
+      <File FileName="ZUSE/Client/Pages/Waiting.razor" />
+      <File FileName="ZUSE/Server/Controllers/ServiceProvidersController.cs" />
+      <File FileName="ZUSE/Server/appsettings.json" />
+      <File FileName="ZUSE/Server/Program.cs" Line="86" Column="1" />
+      <File FileName="ZUSE/Server/Properties/launchSettings.json" />
+      <File FileName="ZUSE/Server/Data/tathkara_dbContext.cs" />
+      <File FileName="ZUSE/Server/Data/TextToSpeech.cs" />
+      <File FileName="ZUSE/Server/appsettings.Development.json" />
+      <File FileName="ZUSE/Server/Data/IUsersManager.cs" />
+      <File FileName="ZUSE/Client/Program.cs" />
+      <File FileName="ZUSE/Shared/CustomDateTimeConverter.cs" />
+      <File FileName="ZUSE/Client/Models/ToUserPayload.cs" />
+      <File FileName="ZUSE/Shared/Models/ToTvPayload.cs" />
+      <File FileName="ZUSE/Shared/Models/UserInitiatedSession.cs" />
+      <File FileName="ZUSE/Client/Pages/TV.razor" />
+      <File FileName="ZUSE/Client/wwwroot/css/app.css" />
+      <File FileName="ZUSE/Client/Pages/TV.razor.css" />
+      <File FileName="ZUSE/Client/Pages/Done.razor" />
+      <File FileName="ZUSE/Client/Models/Interaction.cs" />
+      <File FileName="ZUSE/Client/Models/Arabic.cs" />
+      <File FileName="ZUSE/Server/Controllers/UserInitiatedSessionsController.cs" />
+      <File FileName="ZUSE/Client/Pages/KDS/CardsVeiw.razor" />
+      <File FileName="ZUSE/Client/Pages/Counter.razor" />
+      <File FileName="ZUSE/Client/Pages/VirtualQueue.razor" />
+      <File FileName="ZUSE/Shared/Models/SummarizedKdsSession.cs" />
+      <File FileName="ZUSE/Client/Pages/KDS/SummaryView.razor" />
+      <File FileName="ZUSE/Client/Pages/KDS/SummaryView.razor.css" />
+      <File FileName="ZUSE/Client/ZUSE.Client.csproj" />
+      <File FileName="ZUSE/Client/Shared/EmptyLayout.razor" />
+      <File FileName="ZUSE/Client/wwwroot/service-worker.js" />
+      <File FileName="ZUSE/Client/wwwroot/service-worker.published.js" />
+      <File FileName="ZUSE/Client/App.razor" />
+      <File FileName="ZUSE/Client/Properties/launchSettings.json" />
+      <File FileName="ZUSE/Client/wwwroot/manifest.json" />
+      <File FileName="ZUSE/Server/GoogleTtsCreds.json" />
+      <File FileName="ZUSE/Server/ZUSE.Server.csproj" />
+      <File FileName="ZUSE/Shared/ZUSE.Shared.csproj" />
+      <File FileName="ZUSE/Shared/Models/PosModels/OdooOrderNotification.cs" />
+      <File FileName="ZUSE/Server/Services/ISessionsMapper.cs" />
+      <File FileName="ZUSE/Shared/Models/SessionsCollection.cs" />
+      <File FileName="ZUSE/Server/Controllers/LoyverseController.cs" />
+      <File FileName="ZUSE/Client/Models/kdsSetting.cs" />
+      <File FileName="ZUSE/Shared/Models/PushSubsicribtion.cs" />
+      <File FileName="ZUSE/Shared/Models/SingleSessionEdit.cs" />
+      <File FileName="ZUSE/Shared/Models/UserMetadata.cs" />
+      <File FileName="ZUSE/Client/Models/Settings.cs" />
+      <File FileName="ZUSE/Client/Pages/KDS/CardsVeiw.razor.css" />
+      <File FileName="ZUSE/Server/Models/Whatsapp body.cs" />
+      <File FileName="ZUSE/Server/Mappers/LoyverseMapper.cs" />
+      <File FileName="ZUSE/Server/Controllers/HomeController.cs" />
+      <File FileName="ZUSE/Server/Models/Foodics.cs" />
+      <File FileName="ZUSE/Client/wwwroot/index.html" />
+      <File FileName="ZUSE/Client/Pages/KitchenDisplaySystem.razor" />
+      <File FileName="ZUSE/Client/Models/Order.cs" />
+      <File FileName="ZUSE/Client/Pages/KDS/ServiceProviderNotFoundView.razor" />
+      <File FileName="ZUSE/Client/Pages/KDS/ServiceProviderNotFoundView.razor.css" />
+      <File FileName="ZUSE/Client/Models/Connection.cs" />
+      <File FileName="ZUSE/Client/Pages/KDS/InvalidConnectionIdView.razor" />
+      <File FileName="ZUSE/Client/Pages/KDS/InvalidConnectionIdView.razor.css" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="ZUSE" expanded="True">
+            <Node name="ZUSE.Client" expanded="True">
+              <Node name="Pages" expanded="True">
+                <Node name="KitchenDisplaySystem.razor" expanded="True" />
+              </Node>
+            </Node>
+            <Node name="ZUSE.Server" expanded="True" />
+            <Node name="ZUSE.Shared" expanded="True">
+              <Node name="Models" expanded="True">
+                <Node name="PosModels" expanded="True" />
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <Breakpoint file="/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/Pages/KitchenDisplaySystem.razor" relfile="ZUSE/Client/Pages/KitchenDisplaySystem.razor" line="1277" column="1" />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.ItemProperties.ZUSE.Server PreferredExecutionTarget="/System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app" />
+</Properties>

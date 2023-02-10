@@ -1,0 +1,169 @@
+:root[b-g6aada8rgd] {
+    --officialBgColor: lightslategray;
+    --cardsBgColor: #1b1c25;
+}
+
+body[b-g6aada8rgd] {
+    display: flex;
+    flex-direction: row;
+    width: 100vw;
+    min-height: 100vh;
+    color: azure;
+    background-color: #EBFFFB;
+    font-family: 'Tajawal', sans-serif;
+    user-select: none;
+    overflow: auto;
+}
+
+.categoriesFilterDropDown[b-g6aada8rgd] {
+/*    position: relative;*/
+    padding-right: 3px;
+    /*    right: 0px;*/
+/*    display: inline-block;*/
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    overflow-y: scroll;
+}
+.categoriesFilterDropDownContent[b-g6aada8rgd] {
+    display: none;
+    position: relative;
+    background-color: gray;
+    min-width: 20px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    padding: 5px 5px;
+    z-index: 1;
+    height: 500px;
+    overflow: scroll;
+}
+.categoriesFilterSelescted[b-g6aada8rgd] {
+    display: none;
+    overflow: scroll;
+    padding-left: 5px;
+    margin-right: 5px;
+    height: 500px;
+    overflow: scroll;
+}
+.categoriesFilterDropDown:hover .categoriesFilterDropDownContent[b-g6aada8rgd] {
+    display: block;
+    overflow: scroll;
+    /*    flex-direction: row;*/
+    background-color: rgba(255,255,255,0.1);
+}
+.categoriesFilterDropDown:hover .categoriesFilterSelescted[b-g6aada8rgd] {
+    display: block;
+    /*    flex-direction: row;*/
+/*    background-color: rgba(255,255,255,0.1);*/
+}
+.categoriesFilterDropDownContent button[b-g6aada8rgd]{
+    color: white;
+}
+.controlBar[b-g6aada8rgd] {
+    position: sticky;
+    visibility: visible;
+    right: 0px;
+    top: 0px;
+    padding: 5px;
+    background-color: #61234E;
+    /*background: linear-gradient(180deg, rgba(72,3,173,1) 0%, rgba(0,85,91,1) 45%, rgba(255,255,255,0.9129428742038217) 100%);*/ /*    background-color: white;*/
+    height: 100vh;
+    /*    box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.5);*/
+    width: 9vw;
+    min-width: 9vw;
+}
+.controlBar *[b-g6aada8rgd] {
+    margin-bottom: 2.5vh;
+}
+.controlBar p[b-g6aada8rgd] {
+    margin-bottom: 2px;
+}
+button[b-g6aada8rgd] {
+    background-color: transparent;
+    color: white;
+    border-width: 0px;
+}
+button:focus[b-g6aada8rgd] {
+    display: block;
+/*    display: flex;*/
+    background-color: rgba(255,255,255,0.25);
+    border-radius: 5px;
+}
+.orderTypeView[b-g6aada8rgd] {
+    border-radius: 5px;
+    align-content: start;
+    padding: 3px;
+    overflow: hidden;
+    background-color: rgba(255,255,255,0.1);
+}
+.orderTypeView *[b-g6aada8rgd] {
+    padding-left: 10px;
+}
+.orderTypeView button[b-g6aada8rgd] {
+    position: relative;
+    width: 100%;
+    font-size: small;
+}
+
+.controlBarContentContainer[b-g6aada8rgd] {
+    padding-top: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 5px;
+}
+.controlBarContentContainer img[b-g6aada8rgd] {
+/*        display: block;
+    position: relative;*/
+    width: 30%;
+    height: auto;
+}
+.ZUSE_logo[b-g6aada8rgd]
+{
+    position: fixed;
+    width: 80px;
+    bottom: 0px;
+    right: 15px;
+    opacity: 0.3;
+}
+.controlBarContentContainer p[b-g6aada8rgd] {
+    /*    margin-left: 3px;*/
+}
+.selectedText[b-g6aada8rgd] {
+    color: white;
+/*    font-size: 20px;*/
+}
+.unselectedText[b-g6aada8rgd] {
+/*    font-size: 20px;*/
+    color: black;
+}
+.SummaryView[b-g6aada8rgd] {
+    display: none;
+}
+.summaryView:hover .SummaryView[b-g6aada8rgd] {
+    display: block;
+}
+.controlBarContentContainer:hover .controlbarItemTitle[b-g6aada8rgd] {
+    color: white;
+}
+.controlbarItemTitle[b-g6aada8rgd] {
+    color: black;
+}
+.button[b-g6aada8rgd] {
+}
+.button:focus[b-g6aada8rgd] {
+}
+
+.button:hover[b-g6aada8rgd] {
+}
+
+.button:active[b-g6aada8rgd] {
+}
+
+.button:last-child[b-g6aada8rgd] {
+}
+
+.button:first-child[b-g6aada8rgd] {
+}

@@ -1,0 +1,300 @@
+﻿@page "/{Chat}/{OrderReference}/{Class}/{Topic}/{OrderDate}/{BrowserId}/{language}/waiting"
+@inject IJSRuntime js
+@using ZUSE.Client.Models;
+@using ZUSE.Shared;
+@using ZUSE.Shared.Models;
+@using System.Text.Json;
+@layout MainLayout;
+@inject HttpClient httpClient
+
+@if (UserCommunicationPipe._client.IsConnected || UserCommunicationPipe.isFirstConnection)
+{
+    <h6 style="direction: rtl;">
+        @waitingCustomer.Order.OrderDate
+    </h6>
+
+    <h4 class="glow" style="color: darkred;">
+        <br/>
+        @WaitingCustomer.SelectedLang.UnderProccesing
+    </h4>
+
+    <h2>
+        @Chat.Replace('_', ' ')
+        <br />
+    </h2>
+    @if (!IsMobileNumberProvided)
+    {
+        @if (Class.Equals("pro"))
+        {
+            <h6 id="MobileNumberInstruction">
+                @WaitingCustomer.SelectedLang.MobileNumberLabel
+            </h6>
+
+            <input id="MobileNumberInput"
+                   @bind="MobileNumber"
+                   maxlength="10"
+                   type="tel"
+                   placeholder="05XXXXXXXX">
+            <button type="submit" @onclick="OnEnterMobileNumber">
+                @WaitingCustomer.SelectedLang.EnterOrderReferenceButton
+            </button>
+        }
+    }
+    <ol>
+        @foreach (var call in Latest_calls)
+        {
+            <li>@call</li>
+        }
+    </ol>
+    <img class="WaitingLogo" src="waiting.png" />
+
+}
+else
+{
+    <img class="SPLogo"
+            src="loading.gif" />
+}
+
+@code {
+    [CascadingParameter]
+    public MainLayout MainLayout { get; set; } = null!;
+
+    [Parameter]
+    public string Topic { get; set; } = null!;
+    [Parameter]
+    public string Class { get; set; } = null!;
+    [Parameter]
+    public string OrderReference { get; set; } = null!;
+    [Parameter]
+    public string OrderDate { get; set; }
+    [Parameter]
+    public string Chat { get; set; } = null!;
+    [Parameter]
+    public string language { get; set; } = null!;
+    [Parameter]
+    public string BrowserId { get; set; } = null!;
+
+    public string? MobileNumber { get; set; }
+    public List<string>? Latest_calls { get; set; }
+
+    public WaitingCustomer waitingCustomer { get; set; } = null!;
+
+    [Inject]
+    public NavigationManager NavigationManager { get; set; } = null!;
+
+    private DotNetObjectReference<Waiting>? dotNetHelper;
+
+    public bool IsMobileNumberProvided { get; set; }
+
+    public bool Is_auto_generated_order_reference { get; set; }
+
+    protected override async void OnInitialized()
+    {
+        Latest_calls = new List<string>();
+
+        NavigationManager.LocationChanged += OnLocationChanged;
+        DateTime parsedDate;
+        var date = DateTime.TryParseExact(OrderDate, "yyyy_MM_dd_H:mm", null,
+                                          System.Globalization.DateTimeStyles.AdjustToUniversal, out parsedDate);
+        var real_date = parsedDate.Subtract(TimeSpan.FromHours(1));
+
+        this.waitingCustomer = new WaitingCustomer
+        {
+            Order = new Order
+            {
+                OrderReference = OrderReference,
+                OrderDate = real_date.ToString("h:mm"),
+                RawOrderDate = real_date.ToString("yyyy-MM-dd HH:mm")
+            }
+        };
+
+        if (language.Equals("ar"))
+            WaitingCustomer.SelectedLang = new Arabic(OrderReference);
+        else
+            WaitingCustomer.SelectedLang = new English(OrderReference);
+
+        @*Is_auto_generated_order_reference = this.Customer.ServiceProvider.
+            ToUpper().Equals(this.Customer.ServiceProvider);*@
+
+        RefreshPageInfo();
+        bool AlreadyConnected = await UserCommunicationPipe.StartConnection(topic: Topic + "/users", client_id: MainLayout.GetBrowserId(),
+            connected: () => { StateHasChanged(); }, dissconnected: () => { StateHasChanged(); });
+
+        @*if (AlreadyConnected)*@
+        On_client_connected();
+        await PrepareSound();
+        StateHasChanged();
+    }
+    public void OnLocationChanged (object? sender, LocationChangedEventArgs e)
+    {
+        StateHasChanged();
+    }
+    public void RefreshPageInfo()
+    {
+        MainLayout.Topic = Topic;
+        MainLayout.OrderReference = OrderReference;
+        MainLayout.PageName = "waiting";
+    }
+    public void On_client_connected()
+    {
+        UserCommunicationPipe.AddMsgListener(MsgListener);
+        NotifyCallerOfMyRegistration();
+        StateHasChanged();
+        _ = RequestNotificationSubscriptionAsync();
+    }
+    public async void NotifyCallerOfMyRegistration()
+    {
+        string data = JsonSerializer.Serialize(new UserInitiatedSession
+        {
+            topic = Topic,
+            order_reference = OrderReference,
+            created_at = waitingCustomer.Order.RawOrderDate,
+            browser_id = BrowserId
+        });
+        using (var content = new StringContent(
+                    data
+                    , System.Text.Encoding.Default, "application/json"))
+        {
+            using (var response = await httpClient.PostAsync("user_sessions", content))
+            {
+                string responseHeaders = response.Headers.ToString();
+                string responseData = await response.Content.ReadAsStringAsync();
+
+                Console.WriteLine("Status " + (int)response.StatusCode);
+            }
+        }
+    }
+    public async void OnEnterMobileNumber()
+    {
+        if (MobileNumber is null || !MobileNumber.StartsWith('0') || MobileNumber.Length != 10 ||
+                MobileNumber[1] != '5')
+        {
+            await RejectInput();
+            return;
+        }
+        IsMobileNumberProvided = true;
+        string data = JsonSerializer.Serialize(new UserInitiatedSession
+        {
+            topic = Topic,
+            order_reference = OrderReference,
+            created_at = waitingCustomer.Order.RawOrderDate,
+            phone = "966" + MobileNumber[1..],
+            delivery_status = 0,
+            browser_id = BrowserId
+        });
+        using (var content = new StringContent(
+                    data
+                    , System.Text.Encoding.Default, "application/json"))
+        {
+            using (var response = await httpClient.PostAsync("user_sessions", content))
+            {
+                string responseHeaders = response.Headers.ToString();
+                string responseData = await response.Content.ReadAsStringAsync();
+
+                Console.WriteLine("Status " + (int)response.StatusCode);
+            }
+        }
+        await PrepareSound();
+        StateHasChanged();
+    }
+    public async Task RejectInput()
+    {
+        await js.InvokeAsync<string>("RejectInput", "MobileNumberInstruction",
+            WaitingCustomer.SelectedLang.MobileNumberInstruction);
+    }
+    public void Fill_latest_calls(string new_order_ref)
+    {
+        foreach (var item in Latest_calls)
+        {
+            if (item == new_order_ref)
+                return;
+        }
+        Latest_calls.Insert(0, new_order_ref);
+        if (Latest_calls.Count > 3)
+            Latest_calls.RemoveAt(Latest_calls.Count - 1);
+
+        StateHasChanged();
+    }
+    public async Task PrepareSound()
+    {
+        await js.InvokeAsync<string>("PrepareAudio", "Notification");
+    }
+    async Task RequestNotificationSubscriptionAsync()
+    {
+        dotNetHelper = DotNetObjectReference.Create(this);
+        var subscription = await js.InvokeAsync<PushSubsicribtion>("blazorPushNotifications", dotNetHelper);
+    }
+    [JSInvokable]
+    public void SubscribeToNotifications(string endpoint, string p256dh, string auth)
+    {
+        var pushSubsicribtion = JsonSerializer.Serialize(
+                new PushSubsicribtion(endpoint, p256dh, auth)
+            );
+
+        string data = JsonSerializer.Serialize(new UserInitiatedSession
+        {
+            order_reference = OrderReference,
+            created_at = waitingCustomer.Order.RawOrderDate,
+            push_notification_subsicribtion = pushSubsicribtion,
+            delivery_status = 1,
+            browser_id = BrowserId
+        });
+        UserCommunicationPipe.Publish(Topic, data);
+    }
+    public async void MsgListener(string topic, string msg)
+    {
+        try
+        {
+            Console.WriteLine(msg);
+            if (msg is null || msg.Equals("null"))
+                return;
+
+            var data_info = JsonSerializer.Deserialize<ICollection<CalledOrder>>(msg);
+
+            foreach (var calledOrder in data_info)
+            {
+                if (calledOrder.order_reference is not null)
+                {
+                    var order_reference = calledOrder.order_reference.TrimStart('0');
+                    if (order_reference.Equals(OrderReference) || order_reference.Substring(Math.Max(0, order_reference.Length - 2)).Equals(OrderReference))
+                    {
+                        if (calledOrder.closed_at < DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(30)))
+                            return;
+                        NavigationManager.NavigateTo($"/{DateTime.Now.ToString("h:m tt")}/{Chat}/{OrderReference}/{Class}/{Topic}" +
+                        $"/{OrderDate}/{language}/ready");
+                        await PlaySound();
+                        Console.WriteLine("Order is donnne baby !");
+                        UserCommunicationPipe.RemoveMsgListener(MsgListener);
+                        await UserCommunicationPipe.Disconnect();
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Exception in MsgListener: " + e.StackTrace + " error: " + e.Message);
+        }
+        
+
+        @*string? order_status = data_info.order_status;*@
+
+    }
+
+    public void OnbackToLoginClicked()
+    {
+        NavigationManager.NavigateTo($"{Class}/{Topic}/{OrderDate}/{language}/login");
+    }
+    public async Task PlaySound()
+    {
+        await js.InvokeAsync<string>("PlayAudio", "Notification");
+    }
+    public async Task speak()
+    {
+        await js.InvokeAsync<string>("speak");
+    }
+    @*public void OnPublishButtonClicked()
+        {
+            mqtt_api.Publish(Topic, $"O{this.Customer.Order.OrderReference}");
+        }*@
+}
+

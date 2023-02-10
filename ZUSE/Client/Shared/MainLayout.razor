@@ -1,0 +1,266 @@
+﻿@inherits LayoutComponentBase
+@inject Blazored.LocalStorage.ISyncLocalStorageService localStorage
+
+@using ZUSE.Client.Models;
+@using ZUSE.Shared;
+@using ZUSE.Shared.Models;
+
+@if (true)
+{
+    <div class="main">
+        <audio muted loop id="Notification" type="audio/wav">
+            Your browser does not support the audio tag.
+        </audio>
+        <audio muted id="CheckOrderStatusAlert" type="audio/wav">
+            Your browser does not support the audio tag.
+        </audio>
+        <article class="page">
+            <img src="right_side.png" class="right_side_border" />
+            <img src="left_side.png" class="left_side_border" />
+
+            <img class="SPLogo" id="ServiceProviderLogo" src=@GetServiceProviderLogo()
+                 alt="Service provider logo">
+
+            <div id="full_body">
+                @if (Is_order_info_valid)
+                {
+                    @*<h6>@Topic</h6>*@
+                    <h5>@OrderReference</h5>
+                }
+                <CascadingValue Value="this">
+                    @Body
+                </CascadingValue>
+            </div>
+
+            <div class="FooterFlow">
+                @*<button>*@
+                <button @onclick="LanguageIsSelected">
+                    @(GetNextLang().Equals("ar") ? "عربي" : "English")
+                </button>
+
+                <footer class="Footer">
+                    made possible by
+                    <img src="https://tathkarastorageaccount.blob.core.windows.net/service-providers-logos/zuse.png"
+                         style="width: 50px;"/>
+                </footer>
+            </div>
+        </article>
+    </div>
+}
+else
+{
+    <h1>Page timeout, please rescan TATHKARA QR code</h1>
+    <h1>الخاص بتذكرة QR الصفحة خارج الخدمة، الرجاء إعادة مسح مربع </h1>
+}
+
+@code
+{
+    [Inject]
+    public NavigationManager NavigationManager { get; set; } = null!;
+    string topic = null!;
+    string order_ref = null!;
+    public bool IsPageNotExpired { get; set; } = true;
+    string pagename = null!;
+    public bool Is_order_info_valid { get; set; } = true;
+    private string baseImagesAddress = "https://tathkarastorageaccount.blob.core.windows.net/service-providers-logos/";
+
+    public string Topic
+    {
+        get => topic;
+        set
+        {
+            if (topic != value)
+            {
+                topic = value;
+                StateHasChanged();
+            }
+        }
+    }
+    public string OrderReference
+    {
+        get => order_ref;
+        set
+        {
+            if (order_ref != value)
+            {
+                order_ref = value;
+                StateHasChanged();
+            }
+        }
+    }
+    public string PageName
+    {
+        get => pagename;
+        set
+        {
+            if (pagename != value)
+            {
+                pagename = value;
+                Order_info_valid();
+                StateHasChanged();
+            }
+        }
+    }
+
+    protected override async void OnInitialized()
+    {
+        Console.WriteLine("topic: " + Topic + "  page name: " + PageName);
+
+        PageNotExpired();
+        NavigationManager.LocationChanged += LocationChanged;
+        Order_info_valid();
+        LocationChanged(null, null);
+    }
+
+    private string GetServiceProviderLogo()
+    {
+        return baseImagesAddress + topic?.ToLower() + ".png";
+    }
+
+    public string GetBrowserId()
+    {
+        string key = "_browser_id";
+        if (!localStorage.ContainKey(key))
+        {
+            var generatedKey = Math.Abs(new Random().NextInt64(1000000, 100000000)).ToString() +
+                 Math.Abs(new Random().NextInt64(1000000, 100000000)).ToString();
+            localStorage.SetItemAsString(key, generatedKey);
+            return generatedKey;
+        }
+        return localStorage.GetItemAsString(key);
+    }
+
+    public void RefreshPageInfo(string topic, string order_ref, string page_name)
+    {
+        Topic = topic;
+        OrderReference = order_ref;
+        PageName = page_name;
+    }
+    public void LanguageIsSelected()
+    {
+        // replce ar routing toNavigationManager.Uri en, or vice versa
+        Console.WriteLine("topic: " + Topic + "  page name: " + PageName);
+        var uri_splited = NavigationManager.Uri.Substring(NavigationManager.BaseUri.Length).Split('/');
+        var updated_uri = uri_splited[uri_splited.Length - 2];
+        string new_uri = "";
+        for (int i = 0; i < uri_splited.Length - 2; i++)
+        {
+            new_uri += $"{uri_splited[i]}/";
+        }
+        new_uri += GetNextLang() + "/";
+        new_uri += uri_splited[uri_splited.Length - 1];
+        NavigationManager.NavigateTo(
+                new_uri
+            );
+    }
+    public string[] GetPath()
+    {
+        return NavigationManager.Uri.Substring(NavigationManager.BaseUri.Length).Split('/');
+    }
+    public string GetCurrentLang()
+    {
+        var path = GetPath();
+        return path[path.Length - 2];
+    }
+    public string GetNextLang()
+    {
+        bool current_lang_isArabic = GetCurrentLang().Equals("ar");
+        return current_lang_isArabic ? "en" : "ar";
+    }
+    public void Refresh_IsPageNotExpired()
+    {
+        @*string PageName = info_.GetPageName();
+            if (PageName.Equals("login") || PageName.Equals("waiting"))
+            {
+                IsPageNotExpired = PageNotExpired();
+            }*@
+    }
+
+    public void LocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        string language = GetCurrentLang();
+
+        Order_info_valid();
+        Refresh_IsPageNotExpired();
+
+        if (language.Equals("ar"))
+            WaitingCustomer.SelectedLang = new Arabic(OrderReference);
+        else
+            WaitingCustomer.SelectedLang = new English(OrderReference);
+
+
+        StateHasChanged();
+    }
+    public bool Order_info_valid()
+    {
+        if (PageName is not null)
+            Is_order_info_valid = !PageName.Equals("login");
+        return Is_order_info_valid;
+    }
+    public interface IRange
+    {
+        DateTime Start { get; }
+        DateTime End { get; }
+        bool WithInRange(DateTime value);
+        bool WithInRange(IRange range);
+    }
+
+    public bool PageNotExpired()
+    {
+        @*var expiry_date = GetPageExpiryDate();
+
+            DateTime real_order_date = (DateTime)GetOrderDate(AsString: false, IsAbbreviated: false);
+            var date_range = new DateRange(real_order_date, expiry_date);
+            var current_date = DateTime.Now;
+            IsPageNotExpired = date_range.WithInRange(current_date);
+            return IsPageNotExpired;*@
+        return true;
+    }
+    public string[] GetOrderDateArray()
+    {
+        return GetPath()[3].Split(':');
+    }
+    public DateTime GetPageExpiryDate()
+    {
+        var full_order_date_array = GetOrderDateArray();
+        var date = new DateTime(Int16.Parse(full_order_date_array[2]), Int16.Parse(full_order_date_array[1]),
+        Int16.Parse(full_order_date_array[0]), Int16.Parse(full_order_date_array[3]),
+        Int16.Parse(full_order_date_array[4]), 0);
+        return date;
+    }
+    public object GetOrderDate(bool AsString, bool IsAbbreviated)
+    {
+        var expiry_date = GetPageExpiryDate();
+        var order_date = expiry_date.Subtract(TimeSpan.FromMinutes(60));
+        if (AsString)
+        {
+            if (IsAbbreviated)
+                return $"{order_date.Day}:{order_date.Month} {order_date.Minute}:{order_date.Hour}";
+            return order_date.ToString();
+        }
+        return order_date;
+    }
+    public class DateRange : IRange
+    {
+        public DateTime Start { get; set; }
+        public DateTime End { get; set; }
+
+        public DateRange(DateTime start, DateTime end)
+        {
+            Start = start;
+            End = end;
+        }
+
+        public bool WithInRange(DateTime value)
+        {
+            return (Start <= value) && (value <= End);
+        }
+
+        public bool WithInRange(IRange range)
+        {
+            return (Start <= range.Start) && (range.End <= End);
+        }
+    }
+}
+
+

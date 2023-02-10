@@ -1,0 +1,135 @@
+﻿@page  "/{Topic}/{TvID}/{withLogoOptions:bool}/{Lang}/tv"
+@page  "/{Topic}/{TvID}/{Lang}/tv"
+@page "/tv"
+@layout EmptyLayout
+@using System.Text.Json
+@using ZUSE.Shared.Models;
+@inject IJSRuntime js
+
+@using ZUSE.Shared;
+
+
+<audio muted id="AudioElement" type="audio/wav">
+    Your browser does not support the audio tag.
+</audio>
+<div class="TvPage">
+    <img class="TvSPLogo" id="ServiceProviderLogo" src=@logoSource
+         alt="Service provider logo">
+
+    <ul class="WaitingList">
+        <h1>
+            @WaitingText
+        </h1>
+        @foreach (var notification in WaitingList)
+        {
+            <li>@notification.order_number</li>
+        }
+
+    </ul>
+    <div class="vl"></div>
+    <ul class="DoneList">
+        <h1>
+            @ReadyText
+        </h1>
+        @foreach (var notification in DoneList)
+        {
+            <li>@notification.order_number</li>
+        }
+    </ul>
+
+    <hr class="hl" />
+    <audio muted id="SpeechTextAudio">
+        Your browser does not support the audio tag.
+    </audio>
+    <div class="tathkara_logo" style="display: flex;">
+        <img class="tathkara_logo" src=@($"https://tathkarastorageaccount.blob.core.windows.net/service-providers-logos/zuse.png")
+             alt="Service provider logo">
+    </div>
+    <div class="version">
+        V2.81
+    </div>
+    @*<button class="Unmute" @onclick="speak_1">
+            إتاحة الصوت
+        </button>*@
+</div>
+
+@code
+{
+    [Parameter]
+    public string Topic { get; set; } = "_";
+    [Parameter]
+    public string TvID { get; set; } = "111";
+    [Parameter]
+    public string Lang { get; set; } = "ar";
+    [Parameter]
+    public bool withLogoOptions { get; set; } = false;
+
+    public string WaitingText { get; set; } = "انتظار";
+    public string ReadyText { get; set; } = "استلام";
+    public string logoSource { get; set; } = string.Empty;
+    private List<Session> WaitingList { get; set; } = new();
+    private List<Session> DoneList { get; set; } = new();
+    public List<Session> notifications { get; set; } = new();
+
+    protected override async void OnInitialized()
+    {
+        await UserCommunicationPipe.StartConnection(topic: Topic + "/tv", client_id: Topic + "/" + TvID + "/tv",
+            connected: () => { StateHasChanged(); }
+            , dissconnected: () => { });
+
+        if (Lang.Equals("en"))
+        {
+            WaitingText = "Waiting";
+            ReadyText = "Ready";
+        }
+        logoSource = await GetLogoSource();
+        //await ConnectToWebSocket();
+        UserCommunicationPipe.AddMsgListener(MsgListener);
+    }
+    private async Task<string> GetLogoSource()
+    {
+        var baseAddress = new Uri("https://tathkarastorageaccount.blob.core.windows.net/service-providers-logos");
+        var logoWithTvOption = $"/{Topic}_tv.png";
+
+        return baseAddress + logoWithTvOption;
+        //if (withLogoOptions)
+        //return baseAddress + $"/{Topic}.png";
+    }
+    public async void MsgListener(string topic, string data)
+    {
+        notifications = JsonSerializer.Deserialize<List<Session>>(data);
+
+        var newDoneOrders = notifications?.Where(n => n.delivery_status == 2)
+            .OrderBy(n => n.closed_at.GetValueOrDefault())?.TakeLast(6).ToList();
+
+        var thereIsNoNewDoneOrder = newDoneOrders.All(o => DoneList.Any(oo => o.order_number.Equals(oo.order_number)));
+        if (!thereIsNoNewDoneOrder)
+        {
+            await PlaySound("TvNewDoneOrder.mp3");
+        }
+
+        WaitingList = notifications.Where(n => n.delivery_status != 2)?
+            .OrderBy(n => n.created_at).TakeLast(3)?.ToList();
+
+        DoneList = newDoneOrders;
+        StateHasChanged();
+    }
+    private void ClearAllLists()
+    {
+        WaitingList.Clear();
+        DoneList.Clear();
+        StateHasChanged();
+    }
+    public async Task PlaySound(string soundPath)
+    {
+        await js.InvokeAsync<string>("PlayAudio", "AudioElement", soundPath);
+    }
+    private bool OrderInList(List<string> list, string order_reference)
+    {
+        if (list is null)
+            return false;
+        var result = list.Find(order => order.Equals(order_reference));
+        return result is not null;
+    }
+}
+
