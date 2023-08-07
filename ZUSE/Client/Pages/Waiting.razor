@@ -260,7 +260,7 @@ else
                     {
                         if (calledOrder.closed_at < DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(30)))
                             return;
-                        NavigationManager.NavigateTo($"/{DateTime.Now.ToString("h:m tt")}/{Chat}/{OrderReference}/{Class}/{Topic}" +
+                        NavigationManager.NavigateTo($"/{DateTime.Now.ToString("h:mm")}/{Chat}/{OrderReference}/{Class}/{Topic}" +
                         $"/{OrderDate}/{language}/ready");
                         await PlaySound();
                         Console.WriteLine("Order is donnne baby !");

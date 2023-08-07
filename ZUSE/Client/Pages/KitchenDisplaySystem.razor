@@ -1,5 +1,5 @@
-﻿@page  "/{BusinessReference}/{Topic}/{ScreenNumber:int}/{OrderMakingTimeMinutesThreshold:int}/{Strict:bool}/{IsCompletionApprovalScreen:bool}/kds"
-@page  "/{Topic}/{ScreenNumber:int}/{OrderMakingTimeMinutesThreshold:int}/{Strict:bool}/{IsCompletionApprovalScreen:bool}/kds"
+﻿@page  "/{BusinessReference}/{Topic}/{ScreenNumber:int}/{OrderMakingTimeMinutesThreshold:int}/{isRetail:bool}/{IsCompletionApprovalScreen:bool}/kds"
+@page  "/{Topic}/{ScreenNumber:int}/{OrderMakingTimeMinutesThreshold:int}/{isRetail:bool}/{IsCompletionApprovalScreen:bool}/kds"
 
 @layout EmptyLayout
 @using ZUSE.Shared.Models;
@@ -11,7 +11,6 @@
 @using System.Text.Json;
 @inject HttpClient Http
 @inject Blazored.LocalStorage.ISyncLocalStorageService localStorage
-@using System.Net;
 @using System.Linq
 @using ZUSE.Client.Pages.KDS
 
@@ -19,114 +18,122 @@
     Your browser does not support the audio tag.
 </audio>
 <body>
-    @if (!Strict)
-    {
-        <div class="controlBar">
-            <div style="display: flex; flex-direction: row; column-gap: 5px;">
-                <p>
-                    @filteredSessions.Count of @GetCountOfOrders()
-                    @*<br />*@
-                </p>
-                <p style="color: rgb(240,85,85) ">
-                    @("." + GetLateOrdersCount())
-                </p>
-            </div>
-            @foreach (var setting in settings.list)
+    <div class="controlBar">
+        <div class="ordersCount">
+            <p>
+                @filteredSessions.Count of @GetCountOfOrders()
+                @*<br />*@
+            </p>
+            <p style="color: rgb(240,85,85) ">
+                @("." + GetLateOrdersCount())
+            </p>
+        </div>
+        @foreach (var setting in settings.list)
+        {
+            @if (setting is not null && setting.fullOptions.data is not null)
             {
-                @if (setting is not null && setting.fullOptions.data is not null)
-                {
-                    <div class="categoriesFilterDropDown" @onclick="LoadNewNotificationAlert">
-                        <p>
-
-                        </p>
+                <div class="categoriesFilterDropDown" @onclick="LoadNewNotificationAlert">
+                    <p class="controlbarItemTitle">
                         @setting.name
-                        <div class="categoriesFilterSelescted">
-                            @foreach (var option in setting.fullOptions.data)
+                    </p>
+
+                    <div class="categoriesFilterSelescted">
+                        @foreach (var option in setting.fullOptions.data)
+                        {
+                            @*<input type="checkbox" id="@category" />*@
+                            if (setting.filter.Contains(option.name))
                             {
-                                @*<input type="checkbox" id="@category" />*@
-                                if (setting.filter.Contains(option.name))
-                                {
-                                    <label class="selectedText" @onclick="() => OnSettingsSelect(setting, option.name)">@option.name</label>
-                                }
-                                else
-                                {
-                                    <label class="unselectedText" @onclick="() => OnSettingsSelect(setting, option.name)">@option.name</label>
-                                }
-                                <br />
+                                <label class="selectedText" @onclick="() => OnSettingsSelect(setting, option.name)">@option.name</label>
                             }
-                        </div>
+                            else
+                            {
+                                <label class="unselectedText" @onclick="() => OnSettingsSelect(setting, option.name)">@option.name</label>
+                            }
+                            <br />
+                        }
                     </div>
-                }
+                </div>
             }
+        }
 
 
-            <div class="controlBarContentContainer"
-                 @onclick="OnRecallClicked">
-                <p class="controlbarItemTitle">
-                    RECALL
-                </p>
-                <img src=@GetRecallIconColor() />
-            </div>
+        <div class="controlBarContentContainer"
+             @onclick="OnRecallClicked">
+            <p class="controlbarItemTitle">
+                @display.recall
+            </p>
+            <img src=@GetRecallIconColor() />
+        </div>
 
-            <div class="controlBarContentContainer" @onclick="OnSummaryModeEnabled">
-                <p class="controlbarItemTitle">
-                    Summary
-                </p>
+        <div class="controlBarContentContainer" @onclick="OnSummaryModeEnabled">
+            <p class="controlbarItemTitle">
+                @display.summary
+            </p>
 
-                <img src=@GetSummaryIcon() />
-            </div>
-            <div class="controlBarContentContainer">
+            <img src=@GetSummaryIcon() />
+        </div>
+        <div class="controlBarContentContainer">
 
-                <p style="color: @GetTypeFilterBgColor(2);">
-                    PICKUP
-                </p>
-                <img src=@GetOrderTypeIcon(2, true)
-                     @onmousedown="() => OnViewSelect(2)" />
-
-                <p style="color: @GetTypeFilterBgColor(3);">
-                    DELIVERY
+            <p class="controlbarItemTitle" style="color: @GetTypeFilterBgColor(2);">
+                @display.pickup
+            </p>
+            <img class="controlBarImageButton" src=@GetOrderTypeIcon(2, true)
+                 @onmousedown="() => OnViewSelect(2)" />
+            @if (!isRetail)
+            {
+                <p class="controlbarItemTitle" style="color: @GetTypeFilterBgColor(3);">
+                    @display.delivery
                 </p>
                 <img src=@GetOrderTypeIcon(3, true)
                      @onmousedown="() => OnViewSelect(3)" />
 
-                <p style="color: @GetTypeFilterBgColor(1);">
-                    DINE IN
+                <p class="controlbarItemTitle" style="color: @GetTypeFilterBgColor(1);">
+                    @display.dineIn
                 </p>
                 <img src=@GetOrderTypeIcon(1, true)
                      @onmousedown="() => OnViewSelect(1)" />
+            }
 
-                <p style="color: @GetTypeFilterBgColor(4);">
-                    DRIVE THRU
-                </p>
-                <img src=@GetOrderTypeIcon(4, true)
-                     @onmousedown="() => OnViewSelect(4)" />
-            </div>
-            <h2 style="position:fixed; color: rgba(0, 0, 0, 0.25); bottom: 0px; left: 5px;">V3.81</h2>
-
-            <img @ondblclick="OnStringModeToggle" class="ZUSE_logo" src="loading.png" />
+            <p class="controlbarItemTitle" style="color: @GetTypeFilterBgColor(4);">
+                @display.driveT
+            </p>
+            <img src=@GetOrderTypeIcon(4, true)
+                 @onmousedown="() => OnViewSelect(4)" />
         </div>
-    }
+        <h2 class="sysVersion">V3.94</h2>
+        <div class="controlBarContentContainer"
+             @onclick="OnLangClicked">
+            <p class="controlbarItemTitle">
+                @nextLangName
+            </p>
+        </div>
+
+        <img @ondblclick="OnStringModeToggle" class="ZUSE_logo" src="loading.png" />
+    </div>
 
     <CardsVeiw sessions="@filteredSessions"
                categsFilter="CategoryFilters"
                tablesFilter="tablesFilter"
-               OnDoubleClick="OnDoubleClick"
-               OnOrderDetailMouseUp="OnOrderDetailMouseUp">
+               OnBump="OnBump"
+               OnOrderDetailMouseUp="OnOrderDetailMouseUp"
+               display="display"
+               isRetail="isRetail">
 
     </CardsVeiw>
     @if (!isServiceProviderFound)
     {
-            <ServiceProviderNotFoundView>
-            </ServiceProviderNotFoundView>
+        <ServiceProviderNotFoundView>
+        </ServiceProviderNotFoundView>
     }
-    @if(isConnectionIdUsed)
+    @if (isConnectionIdUsed)
     {
-            <InvalidConnectionIdView id="ScreenNumber">
-            </InvalidConnectionIdView>
+        <InvalidConnectionIdView id="ScreenNumber">
+        </InvalidConnectionIdView>
     }
     @if (InSummaryMode)
     {
-        <SummaryView sessions="summary">
+        <SummaryView summary="summary"
+                     display="display">
 
         </SummaryView>
     }
@@ -140,7 +147,7 @@
     @*[Parameter]
         public string Categories { get; set; } = null!;*@
     [Parameter]
-    public bool Strict { get; set; }
+    public bool isRetail { get; set; }
     [Parameter]
     public string BusinessReference { get; set; } = null!;
     [Parameter]
@@ -152,12 +159,15 @@
 
     public bool inStrictMode { get; set; }
     public string inStrictModeStorageKey { get; set; } = "_inStrictMode";
+    public string langKey { get; set; } = "_lang";
+
     public List<KdsSession> orders { get; set; }
     public List<KdsSession> filteredSessions { get; set; }
     public List<KdsSession> cachedSessions;
     public List<KdsSession> partiallyDoneSessions;
     public SummerizedKdsSessions summary { get; set; } = new();
-
+    public omsInteraction[] interactions { get; set; } = { new omsEnglish(), new omsArabic(), new omsSpanish() };
+    public omsInteraction display { get; set; } = new omsEnglish();
 
     public bool isAudioPrepared { get; set; }
     public string TimeStampColor { get; set; }
@@ -165,7 +175,7 @@
     public string noFilter { get; set; } = "none";
     public int? deliveryStatusFilter { get; set; } = null;
     public int completedOrdersCacheCapacity { get; set; } = 203;
-
+    public string nextLangName { get; set; } = "ESPAÑOL";
     public List<string> CategoryFilters { get; set; } = new();
 
     public List<string> tablesFilter { get; set; } = new();
@@ -187,10 +197,13 @@
 
     protected async override void OnInitialized()
     {
+        ReloadFavInteraction();
+
         orders = new();
         filteredSessions = new();
         cachedSessions = new();
         partiallyDoneSessions = new();
+
 
         await RequestSettingsOptions();
         LoadChachedSessionsToRam();
@@ -250,6 +263,7 @@
     {
         if (Topic is null)
             return;
+
         try
         {
             serviceProviderInfo = await Http.GetFromJsonAsync<ZUSEClient>($"service_providers/{Topic}");
@@ -267,12 +281,11 @@
         if (!string.IsNullOrEmpty(serviceProviderInfo.pos_categories_fetch_url))
         {
             categories = await Http.GetFromJsonAsync<options>($"service_providers/categories/{Topic}");
-            settings.Add(new Models.kdsSetting { name = "CATEGS", storageKey = categoriesStorageKey, filter = CategoryFilters, fullOptions = categories });
+            settings.Add(new Models.kdsSetting { name = display.categs, storageKey = categoriesStorageKey, filter = CategoryFilters, fullOptions = categories });
         }
 
         if (!string.IsNullOrEmpty(serviceProviderInfo.tables_fetch_url))
         {
-            Console.WriteLine("--Tables filtering enabled");
             tables = await Http.GetFromJsonAsync<options>($"service_providers/tables/{Topic}");
             settings.Add(new Models.kdsSetting { name = "TABLES", storageKey = tablesStorageKey, filter = tablesFilter, fullOptions = tables });
         }
@@ -290,7 +303,21 @@
     private void OnShowPartialSessionsClicked()
     {
         deliveryStatusFilter = 1;
+    }
+    private void RefreshNextLangDisplayName()
+    {
+        nextLangName = interactions.Where(i => i.Id.Equals(display.nextInteractionId)).Single().langDisplayName;
+    }
+    private void OnLangClicked()
+    {
+        if (inStrictMode)
+            return;
 
+        display = interactions.Where(i => i.Id.Equals(display.nextInteractionId)).Single();
+
+        RefreshNextLangDisplayName();
+        localStorage.SetItemAsString(langKey, display.Id);
+        RefreshKdsUiElements();
     }
     private string GetRecallIconColor()
     {
@@ -336,9 +363,12 @@
                     session.productsCollection.ForEach(
                             collection =>
                             {
-                                var collectionCetegory = collection.product.category.name;
-                                if (CategoryFilters.Contains(collectionCetegory) && !collectionCetegory.StartsWith('_'))
-                                    allProductsOfAllSessions.Add(collection);
+                                if (collection.stage != productMarks.removed)
+                                {
+                                    var collectionCetegory = collection.product.category.name;
+                                    if (CategoryFilters.Contains(collectionCetegory) && !collectionCetegory.StartsWith('_'))
+                                        allProductsOfAllSessions.Add(collection);
+                                }
                             }
                         );
                     if (!summary.orderTypeQuantitty.ContainsKey(session.ui.orderTypeTitle))
@@ -348,7 +378,7 @@
 
         var distinctCollectionsByProductName = allProductsOfAllSessions.GroupBy(
                 collection =>
-                    collection.product.name
+                    collection, new CollectionsComparer()
             ).ToList();
 
 
@@ -359,22 +389,31 @@
                     summary.sessions.Add(
                             new SingleSummarizedKdsCollection
                             {
-                                productName = group.Key,
-                                quantity = (int)sumOfProductCounts
+                                productName = group.Key.product.name,
+                                quantity = (int)sumOfProductCounts,
+                                kitchen_notes = group.Key.kitchen_notes,
+                                options = group.Key.options
                             }
                         );
                 }
             );
+        summary.groupedSessions = summary.sessions.GroupBy(s => s.productName);
 
-        summary.sessions.ForEach(
-                collection =>
-                {
-                    Console.WriteLine("product: " + collection.productName + "count : " + collection.quantity + " options:");
-                }
-
-            );
-        Console.WriteLine("count : " + allProductsOfAllSessions.Count);
         StateHasChanged();
+    }
+    private void ReloadFavInteraction()
+    {
+        if (!localStorage.ContainKey(langKey))
+            localStorage.SetItem<string>(langKey, "en"); // inital lang for new screens
+
+        var favLangId = localStorage.GetItemAsString(langKey);
+
+        var favLang = interactions.FirstOrDefault(i => i.Id.Equals(favLangId));
+        if (favLang is not null)
+        {
+            display = favLang;
+            RefreshNextLangDisplayName();
+        }
     }
     private void ReloadSettings()
     {
@@ -385,13 +424,14 @@
                 localStorage.SetItem<List<string>>(setting.storageKey, new());
             }
             setting.filter.AddRange(localStorage.GetItem<List<string>>(setting.storageKey));
-            Console.WriteLine("setting name: " + setting.name + " count: " + setting.filter.Count);
         }
 
         if (!localStorage.ContainKey(inStrictModeStorageKey))
             localStorage.SetItem<bool>(inStrictModeStorageKey, false);
 
         inStrictMode = localStorage.GetItem<bool>(inStrictModeStorageKey);
+
+
 
         if (IsCompletionApprovalScreen)
         {
@@ -489,7 +529,6 @@
                 if (split.All(char.IsDigit))
                     tableNumber = split;
             }
-            Console.WriteLine("sections filter count: " + tableNumber);
             return tablesFilter.Contains(tableNumber) && sectionsFilter.Any(s => tableName.Contains(s));
         }
 
@@ -524,10 +563,14 @@
                     filtersSatisfied(order)
             );
 
-        if(deliveryStatusFilter == 2)
+        if (deliveryStatusFilter == 2)
             filteredSessions = filteredSessions.OrderByDescending(order => order.closed_at.GetValueOrDefault()).ToList();
         else
             filteredSessions = filteredSessions.OrderBy(order => order.created_at).ToList();
+        filteredSessions.ForEach(session =>
+        {
+            session.productsCollection = session.productsCollection?.OrderByDescending(pc => pc.product.category.name).ToList();
+        });
         RefreshKdsUiElements();
         StateHasChanged();
     }
@@ -542,7 +585,7 @@
                         collection =>
                         {
                             if (collection.options is not null)
-                                productsCount += collection.options.Count;
+                                productsCount += collection.options.Count / 3;
                             if (!string.IsNullOrEmpty(collection.kitchen_notes))
                                 productsCount += 1;
                         }
@@ -560,8 +603,6 @@
             productsCount += 1;
             //Console.WriteLine("----------------");
         }
-
-        //Console.WriteLine($"productsCount {userSession.order_number}: " + " com: " + combosCollectionCount + " $: " + collectionCount + " #: " + productsCount);
 
         if (productsCount > 9)
             return "span 4";
@@ -674,7 +715,6 @@
             return;
         setting.Select(filterName);
 
-        Console.WriteLine("setting name : " + setting.name + " length: " + setting.filter.Count);
         setting.SaveSettings(localStorage);
         UpdateFilterOrders();
     }
@@ -802,7 +842,6 @@
 
     private async void LoadNewNotificationAlert()
     {
-        Console.WriteLine("LoadNewNotificationAlert");
         if (isAudioPrepared)
             return;
         await PrepareSound();
@@ -887,16 +926,20 @@
         session.delivery_status = 2;
         if (session.closed_at is null)
             session.closed_at = DateTime.UtcNow;
-        orders.RemoveAll( s => s.delivery_status == 2);
+        orders.RemoveAll(s => s.delivery_status == 2);
         UpdateFilterOrders();
         CacheUserSession(session);
     }
     private async Task NotifyServerOfCompletedSession(KdsSession session)
     {
         var data = new StringContent(JsonSerializer.Serialize(session), Encoding.UTF8, "application/json");
-        var respone = await Http.PutAsync($"sessions/close_session", data);
+        HttpResponseMessage response;
+        do
+        {
+            response = await Http.PutAsync($"sessions/close_session", data);
+        } while (!response.IsSuccessStatusCode);
     }
-    private async Task OnDoubleClick(KdsSession userSession)
+    private async Task OnBump(KdsSession userSession)
     {
         MarkAllProductsAsReady(userSession.productsCollection);
         userSession.combosCollection.ForEach(
@@ -952,7 +995,7 @@
     }
     private async Task NotifyAllListenersWithSessionCompletion(KdsSession userSession)
     {
-        await  UserCommunicationPipe.Publish(
+        await UserCommunicationPipe.Publish(
                  Topic + "/kds/complete",
                  JsonSerializer.Serialize(
                          new SingleSessionEdit
@@ -1067,13 +1110,13 @@
         switch (type)
         {
             case 1:
-                return "DINE IN";
+                return display.dineIn;
             case 2:
-                return "PICKUP";
+                return display.pickup;
             case 3:
-                return "DELIVERY";
+                return display.delivery;
             case 4:
-                return "DRIVE T";
+                return display.driveT;
         }
         return "none";
     }
@@ -1112,14 +1155,12 @@
         if (firstOrder.products is null)
         {
             firstOrder.productsCollection = new List<ProductCollection>();
-            Console.WriteLine("products are null in SyncUpdatedOrder");
             return;
         }
         firstOrder.productsCollection = JsonSerializer.Deserialize<List<ProductCollection>>(secondOrder.products);
         if (firstOrder.combos is null)
         {
             firstOrder.combosCollection = new List<ComboCollection>();
-            Console.WriteLine("combos are null in SyncUpdatedOrder");
             return;
         }
         firstOrder.combosCollection = JsonSerializer.Deserialize<List<ComboCollection>>(secondOrder.combos);
@@ -1132,11 +1173,23 @@
     {
         return session.productsCollection.Count(s => s.product.category.name.StartsWith('_') && s.stage != productMarks.removed);
     }
+    private bool IsEqualCollectionsByNameAndOptionsAndNotes(ProductCollection newCollection, ProductCollection existingCollection)
+    {
+        var isSameOptions = true;
+        if (newCollection.options is not null || existingCollection.options is not null)
+            if (newCollection.options is not null && existingCollection.options is not null)
+                isSameOptions = (newCollection.options?.All(xOp => (existingCollection.options?.Any(yOp => (yOp?.modifier_option?.name?.Equals(xOp?.modifier_option?.name)).GetValueOrDefault())).GetValueOrDefault())).GetValueOrDefault();
+            else
+                isSameOptions = false;
+
+        bool isSame = newCollection.product.name.Equals(existingCollection?.product.name) && string.Equals(existingCollection.kitchen_notes, newCollection.kitchen_notes)
+            &&
+            isSameOptions;
+
+        return isSame;
+    }
     private bool MarkUpdatedCollectionsAsUpdated(KdsSession newSession, KdsSession existingSession)
     {
-        //existingSession.productsCollection = newSession.productsCollection;
-        //return true;
-
         bool orderReallyUpdated = false;
         var nspCollections = newSession?.productsCollection;
         var espCollections = existingSession?.productsCollection;
@@ -1144,51 +1197,94 @@
         if (nspCollections is null || espCollections is null)
             return orderReallyUpdated;
 
-        espCollections.ForEach(
-                esp =>
+        espCollections.ForEach(esp =>
+        {
+            if (!esp.product.category.name.StartsWith('_'))
+            {
+                var espName = esp.product.name;
+                if (esp.stage != productMarks.removed && esp.stage != productMarks.ready)
                 {
-                    if (!esp.product.category.name.StartsWith('_'))
+
+                    //var sumQuantity = existingSessionProducts.Sum(esp => esp.quantity);
+                    //var differenceQuantity = nsp.quantity - sumQuantity;
+                    var newSessionProducts = nspCollections.FirstOrDefault(
+                        nsp => IsEqualCollectionsByNameAndOptionsAndNotes(nsp, esp)
+                    );
+
+                    if (newSessionProducts is not null)
                     {
-                        var espName = esp.product.name;
-                        if (esp.stage != productMarks.removed)
+                        var similarSessionProducts = espCollections.Where(esp =>
+                            esp.stage != productMarks.removed
+                            &&
+                           IsEqualCollectionsByNameAndOptionsAndNotes(newSessionProducts, esp)
+                        );
+                        var sumQuantity = similarSessionProducts.Sum(esp => esp.quantity);
+                        if (sumQuantity != newSessionProducts?.quantity)
                         {
-                            var newSessionProduct = nspCollections.Any(
-                                nsp => nsp.product.name.Equals(espName) &&
-                                    esp.quantity == nsp.quantity
-                            );
-                            if (!newSessionProduct)
-                            {
-                                esp.stage = productMarks.removed;
-                                orderReallyUpdated = true;
-                            }
-                        }
-                    }
-                }
-            );
-        // checking every new product
-        nspCollections?.ForEach(
-                nsp =>
-                {
-                    if(!nsp.product.category.name.StartsWith('_'))
-                    {
-                        var nspName = nsp.product.name;
-                        var existingSessionProduct = espCollections.Any(
-                        esp =>
-                                    esp.stage != productMarks.removed &&
-                                    esp.product.name.Equals(nspName) &&
-                                    esp.quantity == nsp.quantity
-                            );
-                        if (!existingSessionProduct)
-                        {
-                            nsp.stage = productMarks.added;
-                            espCollections.Insert(0, nsp);
+                            esp.stage = productMarks.removed;
                             orderReallyUpdated = true;
                         }
                     }
-
+                    else
+                    {
+                        esp.stage = productMarks.removed;
+                        orderReallyUpdated = true;
+                    }
                 }
-            );
+            }
+        });
+
+        nspCollections?.ForEach(nsp =>
+        {
+            if (!nsp.product.category.name.StartsWith('_'))
+            {
+                var existingSessionProducts = espCollections.Where(esp =>
+                    esp.stage != productMarks.removed
+                    &&
+                    IsEqualCollectionsByNameAndOptionsAndNotes(nsp, esp)
+                );
+
+                if (existingSessionProducts.Any())
+                {
+                    var sumQuantity = existingSessionProducts.Sum(esp => esp.quantity);
+                    var differenceQuantity = nsp.quantity - sumQuantity;
+                    if(differenceQuantity > 0)
+                    {
+                        nsp.stage = productMarks.added;
+                        nsp.quantity = differenceQuantity;
+                        espCollections.Insert(0, nsp);
+                        orderReallyUpdated = true;
+                    }
+                    else
+                    {
+
+                    }
+                }
+                else
+                {
+                    var existingSessionProductWithDifferentStage = espCollections.FirstOrDefault(esp =>
+                        esp.stage != productMarks.removed && esp.stage != productMarks.ready &&
+                        IsEqualCollectionsByNameAndOptionsAndNotes(nsp, esp)
+                    );
+
+                    if (existingSessionProductWithDifferentStage is null)
+                    {
+                        nsp.stage = productMarks.added;
+                        espCollections.Insert(0, nsp);
+                        orderReallyUpdated = true;
+                    }
+                }
+            }
+        });
+
         return orderReallyUpdated;
+    }
+
+
+    private void SerializeCustomer(KdsSession session)
+    {
+        if (!string.IsNullOrEmpty(session.customer))
+            session.customerObject = JsonSerializer.Deserialize<Customer>(session.customer);
     }
     private async void MsgListener(string topic, string data)
     {
@@ -1258,11 +1354,18 @@
                 Console.WriteLine("new order list from : " + newOrdersList.sender_id);
 
 
-                if(isFirstBoot)
+                if (isFirstBoot)
                 {
                     orders = newOrdersList.data;
                     isFirstBoot = false;
-                
+                    orders.ForEach(
+                            o =>
+                            {
+                                SerializeProductsToProductsCollection(o);
+                                if (isRetail)
+                                    SerializeCustomer(o);
+                            }
+                        );
                     RefreshKdsUiElements();
                     UpdateFilterOrders();
                     StateHasChanged();
@@ -1279,9 +1382,11 @@
 
                         orderReferenceIfAlreadyExists = OrderNotExists(newOrder);
                         SerializeProductsToProductsCollection(newOrder);
+                        if (isRetail)
+                            SerializeCustomer(newOrder);
                         if (newOrdersList.sender_id == 0)
                         {
-                            if(orderReferenceIfAlreadyExists.Value)
+                            if (orderReferenceIfAlreadyExists.Value)
                             {
                                 if (filtersSatisfied(newOrder))
                                     PlaySound("NewOrder.mp3");
@@ -1300,7 +1405,7 @@
                         }
                     }
                 );
-                
+
             }
             RefreshKdsUiElements();
             UpdateFilterOrders();

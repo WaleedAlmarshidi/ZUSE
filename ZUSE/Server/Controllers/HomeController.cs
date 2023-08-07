@@ -15,6 +15,19 @@ namespace ZUSE.Server.Controllers
     [Route("/")]
     public class HomeController : Controller
     {
+        [Route("zid-redirect")]
+        public void Redirect()
+        {
+            var clientId = "1770";
+            var redirectUri = "https://client.zuse.solutions/zid/oauth/callback";
+            var responseType = "code";
+            var queryString = string.Format("client_id={0}&redirect_uri={1}&response_type={2}",
+                                             clientId, redirectUri, responseType);
+            var authorizeUrl = "https://oauth.zid.sa/oauth/authorize";
+            var fullUrl = string.Format("{0}?{1}", authorizeUrl, queryString);
+            Response.Redirect(fullUrl);
+        }
+
         // GET: /<controller>/
         [HttpPost("ping")]
         public async Task<ActionResult> Index([FromBody] RequestOfFoodicsLocalConnectionPing x)

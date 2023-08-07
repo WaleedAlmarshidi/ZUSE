@@ -20,7 +20,7 @@ builder.Services.AddControllers().AddJsonOptions(
     options =>
     {
         options.JsonSerializerOptions.Converters.Add(new CustomDateTimeConverter());
-        options.JsonSerializerOptions.Converters.Add(new LoyverseDateTimeConverter());
+        options.JsonSerializerOptions.Converters.Add(new DefaultDateTimeConverter());
     }
 );
 

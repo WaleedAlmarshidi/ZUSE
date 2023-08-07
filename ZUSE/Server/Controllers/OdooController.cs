@@ -15,7 +15,7 @@ namespace ZUSE.Server.Controllers
     public class OdooController : Controller
     {
 
-        private readonly ISessionsMapper sessionsMapper;
+        private readonly OdooMapper sessionsMapper;
         private readonly ZUSE_dbContext dbContext;
 
         public OdooController(ZUSE_dbContext dbContext)

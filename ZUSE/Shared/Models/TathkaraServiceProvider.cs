@@ -12,7 +12,7 @@ namespace ZUSE.Shared.Models
     }
     public enum integrated_pos
     {
-        odoo, foodics, loyverse
+        odoo, foodics, loyverse, square
     }
     public class ZUSEClient
     {

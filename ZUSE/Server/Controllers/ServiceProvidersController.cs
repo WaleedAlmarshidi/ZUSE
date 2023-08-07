@@ -33,11 +33,13 @@ public class SPsController : ControllerBase
         return Ok(dbContext.ZUSEClients.ToList());
     }
     [HttpGet("{topic}")]
-    public ZUSEClient getKdsServiceOptinos(string topic)
+    public IActionResult getKdsServiceOptinos(string topic)
     {
         var existingServiceProvider = dbContext.ZUSEClients.Where(zc => zc.topic.Equals(topic)).FirstOrDefault();
         //return JsonSerializer.Serialize(dbContext.KdsServiceOptions.Find(existingServiceProvider.kds_service_options.id));
-        return existingServiceProvider;
+        if (existingServiceProvider is null)
+            return NotFound();
+        return Ok(existingServiceProvider);
     }
     [HttpGet("categories/{topic}")]
     public async Task<options> productsCategories(string topic)
@@ -53,6 +55,9 @@ public class SPsController : ControllerBase
             {
                 case integrated_pos.loyverse:
                     return await Loyverse.GetCategsListAsync(existingServiceProvider);
+
+                case integrated_pos.square:
+                    return await Sqaure.GetCategsListAsync();
             }
             var client = new HttpClient();
             HttpRequestMessage requestMessage;
@@ -94,7 +99,7 @@ public class SPsController : ControllerBase
 
             return response;
         }
-        catch
+        catch(Exception ex)
         {
 
         }

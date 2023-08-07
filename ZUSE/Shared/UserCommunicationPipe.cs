@@ -149,10 +149,10 @@ namespace ZUSE.Shared
             if (_client is null)
                 return;
 
-            if(msg.Length < 1000)
-                Console.WriteLine($"Publishing {msg} , {topic}");
-            else
-                Console.WriteLine($"Publishing to {topic}");
+            //if(msg.Length < 1000)
+            //    Console.WriteLine($"Publishing {msg} , {topic}");
+            //else
+            //    Console.WriteLine($"Publishing to {topic}");
             if (!_client.IsConnected)
             {
                 await _client.EnqueueAsync(topic: topic, payload: msg,
@@ -164,7 +164,7 @@ namespace ZUSE.Shared
         }
         public async static Task Subsicribe(string topic)
         {
-            Console.WriteLine($"listening to {topic}, number of topics: " + Topics.Count);
+            //Console.WriteLine($"listening to {topic}, number of topics: " + Topics.Count);
             if(!Topics.Contains(topic))
                 Topics.Add(topic);
             await _client.SubscribeAsync(topic, MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);

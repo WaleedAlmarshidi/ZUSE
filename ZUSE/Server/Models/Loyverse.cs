@@ -38,7 +38,7 @@ namespace ZUSE.Server.Models
     public class LoyverseNotification
 	{
 		public string merchant_id { get; set; }
-		[JsonConverter(typeof(LoyverseDateTimeConverter))]
+		[JsonConverter(typeof(DefaultDateTimeConverter))]
 		public DateTime created_at { get; set; }
 		public List<receipt> receipts { get; set; }
 	}
@@ -61,22 +61,6 @@ namespace ZUSE.Server.Models
 		public string? category { get; set; }
 		public ICollection<LineModifier> line_modifiers { get; set; }
 
-    }
-
-public class LoyverseDateTimeConverter : JsonConverter<DateTime>
-    {
-
-        public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            //Console.WriteLine("in Read datetime : " + reader.GetString());
-            return DateTime.ParseExact(reader.GetString(),"yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture);
-        }
-
-        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
-        {
-            //Don't implement this unless you're going to use the custom converter for serialization too
-            throw new NotImplementedException();
-        }
     }
     public class LineModifier
     {

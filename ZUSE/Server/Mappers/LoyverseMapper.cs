@@ -8,7 +8,7 @@ using ZUSE.Shared.Models.PosModels;
 
 namespace ZUSE.Server.Mappers
 {
-	public class LoyverseMapper : ISessionsMapper
+	public class LoyverseMapper
     {
 		public LoyverseMapper()
 		{
@@ -90,6 +90,15 @@ namespace ZUSE.Server.Mappers
         {
             return new();
         }
+        public async Task<Session> MapSqaureNotification(SqaureNotification sqaureNotification)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Session> MapSqaureNotificationAsync(SqaureNotification sqaureNotification)
+        {
+            throw new NotImplementedException();
+        }
     }
     internal class loyverseCategory
     {
@@ -99,5 +108,6 @@ namespace ZUSE.Server.Mappers
     {
         public string? category_id { get; set; }
     }
+
 }
 

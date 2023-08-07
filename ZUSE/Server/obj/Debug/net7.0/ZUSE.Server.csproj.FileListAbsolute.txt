@@ -37,6 +37,7 @@
 /Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Server/bin/Debug/net7.0/Microsoft.EntityFrameworkCore.SqlServer.dll
 /Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Server/bin/Debug/net7.0/Microsoft.Extensions.Configuration.Binder.dll
 /Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Server/bin/Debug/net7.0/Microsoft.Extensions.DependencyModel.dll
+/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Server/bin/Debug/net7.0/Microsoft.Extensions.Options.dll
 /Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Server/bin/Debug/net7.0/Microsoft.Identity.Client.dll
 /Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Server/bin/Debug/net7.0/Microsoft.Identity.Client.Extensions.Msal.dll
 /Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Server/bin/Debug/net7.0/Microsoft.IdentityModel.Abstractions.dll

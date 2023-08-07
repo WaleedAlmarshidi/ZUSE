@@ -360,7 +360,7 @@ namespace ZUSE.Server.Managers
 
         public async Task UpdateTvSession(ZUSE_dbContext dbContext, Session userSession, ZUSEClient serviceProvider)
         {
-            var dateTimeLowerBound = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1));
+            var dateTimeLowerBound = DateTime.UtcNow.Subtract(TimeSpan.FromHours(2));
             var last11UndeliveredOrders = dbContext.sessions.Where(
                         session =>
                             session.created_at > dateTimeLowerBound

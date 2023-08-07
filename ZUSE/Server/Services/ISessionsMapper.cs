@@ -10,6 +10,7 @@ namespace ZUSE.Server.Services
        public Session MapFoodicsNotification(FoodicsOrderNotification notification);
         public Session MapOdooNotification(OdooOrderNotification orderNotification);
         public Task<Session> MapLoyverseNotificationAsync(ZUSEClient serviceProvider, LoyverseNotification loyverseNotification);
+        public Task<Session> MapSqaureNotificationAsync(SqaureNotification sqaureNotification);
     }
 }
 

@@ -1,4 +1,5 @@
 ﻿@using ZUSE.Shared.Models;
+@using ZUSE.Client.Models;
 
 <div class="cardsView">
     @*@if(filteredSessions is not null)*@
@@ -7,12 +8,19 @@
         @*@onmouseup="args => OnMouseUp(item, args)" @onmouseout="args => OnMouseOut(item, args)" @onmousedown="OnMouseDown" @onmousemove="args => OnMouseMove(item, args)"*@
         <div id="orderCard" class="orderCard"
              style="grid-row: @item?.ui?.gridSpan;">
-            <div style="background-color: @item?.ui?.timeStamp_color" class="orderCardHeader" @ondblclick="() => OnDoubleClick(item)">
+            <div style="background-color: @item?.ui?.timeStamp_color" class="orderCardHeader" @onclick="() => OnBump(item)">
                 <div class="orderReference"
-                     style="background-color: @item?.ui?.orderReference_color">
+                     style="background-color: @item?.ui?.orderReference_color;">
                     <strong>
                         @item?.order_number
                     </strong>
+                    @if (isRetail)
+                    {
+                        <div style="font-size: 15px; text-align: center;">
+                                @item?.customerObject?.name
+                                @*@item?.customer*@
+                        </div>
+                    }
                 </div>
                 <div class="orderType">
 
@@ -28,11 +36,12 @@
             <ul class="orderCardDetials">
                 @if(!string.IsNullOrEmpty(item?.table_name))
                 {
-                    <div style="font-size: 1.5vw; color: hsl(207, 100%, 67%); text-anchor: middle;">
+                    <div class="orderAdditionalInfo">
                             table: @item.table_name
+                            
                     </div>
                  }
-                <div style="font-size: 1.3vw; color: hsl(207, 100%, 67%); text-anchor: middle;">
+                <div class="orderAdditionalInfo">
                     @item.kitchen_notes
                 </div>
                 @foreach (var combo in item?.combosCollection)
@@ -59,17 +68,19 @@
                         <li id="@collection?.ui?.orderDetail_styleClass" @onmouseup="() => { OnOrderDetailMouseUp(item, collection); }"
                             class="orderDetail">
                             @collection.quantity
-                            x
+                            <div style="font-size: 1.4vw; vertical-align: middle; display: inline-block;">
+                                x
+                            </div>
                             @collection.product.name
-                            <ul style="color: hsl(207, 100%, 67%); font-size: 1.3vw;">
+                            <ul class="item-note">
                                 @collection.kitchen_notes
                             </ul>
                             <ul>
                                 @if (collection.options is not null)
                                     @foreach (var option in collection.options)
                                     {
-                                        <li>
-                                            @option.modifier_option.name
+                                        <li id="@collection?.ui?.orderDetail_styleClass">
+                                            @option.modifier_option?.name
                                         </li>
                                     }
                             </ul>
@@ -87,15 +98,22 @@
     public List<KdsSession> sessions { get; set; }
 
     [Parameter]
+    public bool isRetail { get; set; }
+
+    [Parameter]
     public List<string> categsFilter { get; set; }
 
     [Parameter]
     public List<string> tablesFilter { get; set; }
 
     [Parameter]
-    public Func<KdsSession, Task> OnDoubleClick { get; set; }
+    public Func<KdsSession, Task> OnBump { get; set; }
 
     [Parameter]
     public Func<KdsSession, ProductCollection,  Task> OnOrderDetailMouseUp { get; set; }
+
+
+    [Parameter]
+    public omsInteraction display { get; set; }
 }
 

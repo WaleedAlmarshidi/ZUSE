@@ -46,9 +46,11 @@ namespace ZUSE.Server.Managers
                 ).SingleOrDefault();
         }
 
-        public async Task<IResult> PostOrUpdateSession(Session userSession)
+        public async Task<IResult> PostOrUpdateSession(Session session)
         {
-            var serviceProvider = GetServiceProvider(dbContext, userSession.business_reference, userSession.branch_reference);
+            var products = JsonSerializer.Deserialize<List<ProductCollection>>(session.products);
+
+            var serviceProvider = GetServiceProvider(dbContext, session.business_reference, session.branch_reference);
             if (serviceProvider is null) // service provider not registerd
             {
                 Console.WriteLine("serviceProvider not found");
@@ -57,37 +59,38 @@ namespace ZUSE.Server.Managers
 
             try
             {
-                var existingSession = dbContext.sessions.Find(userSession.id, userSession.business_reference);
+                var existingSession = dbContext.sessions.Find(session.id, session.business_reference);
                 if (existingSession is null)
                 {
-                    AddControlOMSFunctionalityIfAsked(serviceProvider, userSession);
+                    AddControlOMSFunctionalityIfAsked(serviceProvider, session);
+                    
                     await AddWebHookInitiatedSession
                             (
                                 dbContext,
-                                userSession,
+                                session,
                                 serviceProvider
                             );
-                    await dbContext.sessions.AddAsync(userSession);
+                    await dbContext.sessions.AddAsync(session);
                 }
                 else
                 {
-                    existingSession.products = userSession.products;
+                    existingSession.products = session.products;
                     await AddWebHookInitiatedSession
                             (
                                 dbContext,
                                 existingSession,
                                 serviceProvider
                             );
-                    AddControlOMSFunctionalityIfAsked(serviceProvider, existingSession);
+                    AddControlOMSFunctionalityIfAsked(serviceProvider, session);
                 }
                 await dbContext.SaveChangesAsync();
             }
             catch (InvalidOperationException e)
             {
-                return Results.Conflict("session already exists, updated but not added");
+                return Results.Ok("session already exists, updated but not added");
             }
             //await dbContext.SaveChangesAsync();
-            return Results.Ok(userSession.order_reference);
+            return Results.Ok();
         }
         private List<ProductCollection> SerializeProductsToProductsCollection(Session session)
         {
@@ -148,13 +151,140 @@ namespace ZUSE.Server.Managers
             return JsonSerializer.Serialize(espCollections);
             //if(CountSessionProducts(existingSession) <= CountSessionProducts(newSession))
         }
+        public async Task<IResult> EditClosedOrder(Session session)
+        {
+            var serviceProvider = GetServiceProvider(dbContext, session.business_reference, session.branch_reference);
+            if (serviceProvider is null) // service provider not registerd
+            {
+                Console.WriteLine("serviceProvider not found");
+                return Results.Problem("service provider not found");
+            }
+
+            try
+            {
+                var comparer = new CollectionsComparer();
+                var existingSession = dbContext.sessions.Find(session.id, session.business_reference);
+                if (existingSession is null)
+                {
+                    AddControlOMSFunctionalityIfAsked(serviceProvider, session);
+                    await AddWebHookInitiatedSession
+                            (
+                                dbContext,
+                                session,
+                                serviceProvider
+                            );
+                    await dbContext.sessions.AddAsync(session);
+                }
+                else
+                {
+                        var nspCollections = SerializeProductsToProductsCollection(session);
+                        var espCollections = SerializeProductsToProductsCollection(existingSession);
+                        if(nspCollections.All(i => i.stage == productMarks.removed))
+                        {
+                            var removedCollections = new List<ProductCollection>();
+                            espCollections.ForEach(esp =>
+                            {
+                                var numOfDeletedCollections = nspCollections.Where(i => i.Equals(esp)).Sum(i => i.quantity);
+                                esp.quantity -= numOfDeletedCollections;
+                                if (esp.quantity <= 0)
+                                    removedCollections.Add(esp);
+                            });
+                            foreach (var copy in removedCollections)
+                            {
+                                espCollections.RemoveAll(i => i.Equals(copy));
+                            }
+                            //var numOfDeletedCollections = nspCollections.Where(i => i.Equals(nsp) && i.stage == productMarks.removed).Sum(i => i.quantity);
+                            //espCollections.RemoveAll(
+                            //        e =>
+                            //            nspCollections.Contains(e) && e.quantity == 1
+                            //    );
+                            
+                        }
+                        else
+                        {
+                                //espCollections.RemoveAll(
+                                //        e =>
+                                //            nspCollections.Contains(e)
+
+                                //    );
+                                espCollections.AddRange(
+                                        nspCollections.Where(n => !espCollections.Contains(n, comparer = new CollectionsComparer()))
+                                    );
+                        }
+                            //if(nspCollections.All(i => i.stage == productMarks.normal))
+                            //    espCollections.
+                        //nspCollections.ForEach(
+                        //        nsp =>
+                        //        {
+                                    //var numOfDeletedCollections = nspCollections.Where(i => i.Equals(nsp) && i.stage == productMarks.removed).Sum(i => i.quantity);
+
+                                    //if(existingCollection.)
+                                    //existingCollection.quantity -= numOfDeletedCollections;
+                                    //if (existingCollection.quantity < 0)
+                                    //    espCollections.Remove(existingCollection);
+
+                            //    }
+                            //);
+                        existingSession.products = JsonSerializer.Serialize(espCollections);
+                        AddControlOMSFunctionalityIfAsked(serviceProvider, existingSession, espCollections);
+                        await AddWebHookInitiatedSession
+                            (
+                                dbContext,
+                                existingSession,
+                                serviceProvider
+                            );
+                }
+                //else
+                //{
+                //    //existingSession.products = session.products;
+                //    var nspCollections = SerializeProductsToProductsCollection(session);
+                //    var espCollections = SerializeProductsToProductsCollection(existingSession);
+                //    nspCollections.ForEach(
+                //            y =>
+                //            {
+                //                var esp = espCollections.Where(
+                //                        x =>
+                //                            x.product.name.Equals(y?.product.name) && string.Equals(x.kitchen_notes, y.kitchen_notes)
+                //                            &&
+                //                            (x.options?.All(xOp => (y.options?.Any(yOp => (yOp?.modifier_option?.name?.Equals(xOp?.modifier_option?.name)).GetValueOrDefault())).GetValueOrDefault())).GetValueOrDefault()
+
+                //                    ).SingleOrDefault();
+                //                if(esp is not null)
+                //                {
+                //                    esp.quantity -= y.quantity;
+                //                    if (esp?.quantity < 1)
+                //                    {
+                //                        //esp.stage = productMarks.removed;
+                //                        espCollections.Remove(esp);
+                //                    }
+                //                }
+                //            }
+                //        );
+                //    existingSession.products = JsonSerializer.Serialize(espCollections);
+                //    AddControlOMSFunctionalityIfAsked(serviceProvider, existingSession, espCollections);
+                //    await AddWebHookInitiatedSession
+                //            (
+                //                dbContext,
+                //                existingSession,
+                //                serviceProvider
+                //            );
+                //}
+                await dbContext.SaveChangesAsync();
+            }
+            catch (InvalidOperationException e)
+            {
+                return Results.Ok("session already exists, updated but not added");
+            }
+            //await dbContext.SaveChangesAsync();
+            return Results.Ok(session.order_reference);
+        }
         public async Task<IResult> PostNewSession(Session userSession)
         {
             var serviceProvider = GetServiceProvider(dbContext, userSession.business_reference, userSession.branch_reference);
             if (serviceProvider is null) // service provider not registerd
             {
                 Console.WriteLine("serviceProvider not found");
-                return Results.Problem("service provider not found");
+                return Results.Ok("service provider not found");
             }
 
             try
@@ -171,17 +301,14 @@ namespace ZUSE.Server.Managers
             }
             catch(InvalidOperationException e)
             {
-                //var existingSession = dbContext.sessions.Find(userSession.id, userSession.business_reference);
-                //if (existingSession is null)
-                //    return Results.Problem();
-
-                //existingSession.products = userSession.products;
-                //await dbContext.SaveChangesAsync();
-                return Results.Conflict("session already exists");
+                return Results.Ok("session already exists");
             }
             return Results.Ok(userSession.order_reference);
         }
-
+        public async Task<Session> GetExistingSession(Session session)
+        {
+            return await dbContext.sessions.FindAsync(session.id, session.business_reference);
+        }
         public void ChangeOrderStatus(Session session, int status)
         {
             session.delivery_status = status;
@@ -192,11 +319,11 @@ namespace ZUSE.Server.Managers
                     ServiceProvider => ServiceProvider.topic.Equals(topic)
                 ).SingleOrDefault();
         }
-        private void AddControlOMSFunctionalityIfAsked(ZUSEClient serviceProvider, Session session)
+        private void AddControlOMSFunctionalityIfAsked(ZUSEClient serviceProvider, Session session, List<ProductCollection>? passedProducts = null)
         {
             if (serviceProvider.is_kds_order_completion_approval_needed)
             {
-                var products = JsonSerializer.Deserialize<List<ProductCollection>>(session.products);
+                var products = passedProducts is null ? JsonSerializer.Deserialize<List<ProductCollection>>(session.products) : passedProducts;
                 var assemblyPointApprovalKey = "_approval";
                 if (products?.Find(product => product.product.category.name.Equals(assemblyPointApprovalKey)) is null)
                     products?.Add(new ProductCollection()
@@ -244,7 +371,7 @@ namespace ZUSE.Server.Managers
             }
             catch (Exception e)
             {
-                return Results.Problem("service provider already exists");
+                return Results.Ok("service provider already exists");
             }
             return Results.Accepted($"Client added succesfully ");
 
@@ -281,14 +408,12 @@ namespace ZUSE.Server.Managers
 
         public async Task<IResult> PushClosedSession(Session session)
         {
-            Console.WriteLine("in PushClosedSession " + session.closed_at.GetValueOrDefault());
-
-            var existingSession = dbContext.sessions.Find(session.id, session.business_reference);
+            var existingSession = await GetExistingSession(session);
 
             if (existingSession is null)
             {
                 Console.WriteLine("session with id : " + session.id + " not found in PutOrderDeliveryStatus controller");
-                return Results.NotFound("session not found");
+                return Results.Problem("session not found");
             }
             existingSession.delivery_status = 2;
             existingSession.products = session.products;
@@ -298,7 +423,7 @@ namespace ZUSE.Server.Managers
             if (serviceProvider is null)
             {
                 Console.WriteLine("service provider not found");
-                return Results.NotFound("service provider not found");
+                return Results.Problem("service provider not found");
             }
 
             var assosiatedServiceProviderManager = FindAssosiatedManager(serviceProvider.topic);

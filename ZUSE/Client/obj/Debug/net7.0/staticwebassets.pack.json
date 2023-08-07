@@ -5,7 +5,7 @@
       "PackagePath": "staticwebassets/_framework/blazor.webassembly.js"
     },
     {
-      "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/obj/Debug/net7.0/build-gz/aOAf+7KA.gz",
+      "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/obj/Debug/net7.0/build-gz/6NTyOJ2q.gz",
       "PackagePath": "staticwebassets/_framework/blazor.webassembly.js.gz"
     },
     {
@@ -51,6 +51,10 @@
     {
       "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/FoodDelivery-white.png",
       "PackagePath": "staticwebassets/FoodDelivery-white.png"
+    },
+    {
+      "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/Locate.jpg",
+      "PackagePath": "staticwebassets/Locate.jpg"
     },
     {
       "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/NewOrder.mp3",
@@ -169,6 +173,10 @@
       "PackagePath": "staticwebassets/favicon.ico"
     },
     {
+      "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/hungerstation.png",
+      "PackagePath": "staticwebassets/hungerstation.png"
+    },
+    {
       "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/i512.png",
       "PackagePath": "staticwebassets/i512.png"
     },
@@ -183,6 +191,10 @@
     {
       "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/index.html",
       "PackagePath": "staticwebassets/index.html"
+    },
+    {
+      "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/jahez.png",
+      "PackagePath": "staticwebassets/jahez.png"
     },
     {
       "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/l.png",
@@ -209,6 +221,10 @@
       "PackagePath": "staticwebassets/manifest.json"
     },
     {
+      "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/mrsool.png",
+      "PackagePath": "staticwebassets/mrsool.png"
+    },
+    {
       "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/right_side.png",
       "PackagePath": "staticwebassets/right_side.png"
     },
@@ -221,8 +237,16 @@
       "PackagePath": "staticwebassets/summary.png"
     },
     {
+      "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/thechefz.png",
+      "PackagePath": "staticwebassets/thechefz.png"
+    },
+    {
       "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/waiting.png",
       "PackagePath": "staticwebassets/waiting.png"
+    },
+    {
+      "Id": "/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/wwwroot/zuse-white.png",
+      "PackagePath": "staticwebassets/zuse-white.png"
     },
     {
       "Id": "obj/Debug/net7.0/staticwebassets/msbuild.ZUSE.Client.Microsoft.AspNetCore.StaticWebAssets.props",

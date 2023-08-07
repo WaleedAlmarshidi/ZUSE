@@ -7,7 +7,7 @@
 -DCORE_BINDINGS
 -DGEN_PINVOKE=1
 -emit-llvm
-"-I/Users/waleed.almarshidi/Desktop/ZUSE/ZUSE/Client/obj/Release/net7.0/wasm/for-publish"
-"-I/usr/local/share/dotnet/packs/Microsoft.NETCore.App.Runtime.Mono.browser-wasm/7.0.2/runtimes/browser-wasm/native/include/mono-2.0"
-"-I/usr/local/share/dotnet/packs/Microsoft.NETCore.App.Runtime.Mono.browser-wasm/7.0.2/runtimes/browser-wasm/native/include/wasm"
+"-I/Users/waleed.almarshidi/Documents/ZUSE/ZUSE/Client/obj/Release/net7.0/wasm/for-publish"
+"-I/usr/local/share/dotnet/packs/Microsoft.NETCore.App.Runtime.Mono.browser-wasm/7.0.5/runtimes/browser-wasm/native/include/mono-2.0"
+"-I/usr/local/share/dotnet/packs/Microsoft.NETCore.App.Runtime.Mono.browser-wasm/7.0.5/runtimes/browser-wasm/native/include/wasm"
 -g

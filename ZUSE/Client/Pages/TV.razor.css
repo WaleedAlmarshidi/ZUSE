@@ -1,75 +1,111 @@
 ﻿.TvPage {
-    position: static;
+    display: flex;
+    flex-direction: row;
+    position: relative;
     text-align: center;
     /*    display: flow;*/
-    font-family: 'Tajawal', sans-serif;
+    font-family: mainFont-OMS;
     color: #f6f3f4;
     background-color: #1b1c25;
     width: 100vw;
-    min-height: 100vh;
-}
+    height: 100vh;
 
-.WaitingList {
-    column-count: 1;
+    /*    column-gap: 50px;*/
+/*    justify-content: space-around;*/
+    justify-content: space-between;
+}
+.notificationContainer {
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 10px;
+}
+.notificationContainer img {
+    /*        display: block;
+    position: relative;*/
+    width: 40%;
+    height: auto;
+}
+.WaitingList, .DoneList {
+    padding-top: 20px;
+    column-count: 2;
+    min-width: 40%;
+    /*    max-width: 10%;*/
     column-gap: 20px;
-    column-rule-style: dotted;
+    column-rule-style: none;
     column-rule-width: 3px;
-    /*-webkit-columns: 2;
-    -moz-columns: 2;*/
-    background-color: transparent;
-    position: absolute;
-    top: 3vh;
-    right: 7vw;
     direction: rtl;
+    flex-basis: 50%;
+    break-inside: avoid;
+    break-after: avoid;
+    break-before: avoid;
 }
 
 .WaitingList h1 {
-/*    column-span: all;*/
-    font-size: 8vw;
+    column-span: all;
+    font-size: 6vw;
 }
 
 .WaitingList li {
-    margin-right: 1px;
+   display: inline-block;
+/*    list-style-type: none;*/
+    margin-left: 10px;
     color: orangered;
-    font-size: 8vw;
+    padding-bottom: 10px;
+    margin: 10px;
+    font-size: 2.5vw;
     text-align: center;
-    list-style-type: none;
+    min-width: 12vw;
+    max-width: 20vw;
+/*    
+    padding-left: 20px;
+    padding-right: 20px;*/
+    margin-left: 10px;
+    margin-right: 10px;
 }
-.WaitingList li:last-child{
-    animation: glow 0.5s ease-in-out infinite alternate;
-}
-.DoneList {
-    column-count: 2;
-    column-gap: 20px;
-    column-rule-style: dotted;
-    column-rule-width: 3px;
-    font-size: 8vw;
-    position: absolute;
-    left: 0vw;
-    top: 3vh;
-    direction: rtl;
-}
+
 .DoneList h1 {
     column-span: all;
-    font-size: 8vw;
+    font-size: 6vw;
 }
 .DoneList li {
-    list-style-type: none;
+    display: inline-block;
+/*    list-style-type: none;*/
     margin-left: 10px;
     color: greenyellow;
-    font-size: 7vw;
+    padding-bottom: 10px;
+    margin: 10px;
+    font-size: 2.5vw;
     text-align: center;
+    min-width: 12vw;
+    max-width: 20vw;
+/*    
+    padding-left: 20px;
+    padding-right: 20px;*/
+    margin-left: 10px;
+    margin-right: 10px;
 }
 
 .DoneList li:last-child {
     list-style-type: none;
     position: fixed;
-    bottom: 11vh;
-    font-size: 12vw;
+    bottom: 15vh;
+    font-size: 3vw;
     left: calc(-50vw + 50%);
     right: calc(-50vw + 50%);
     margin-left: auto;
     margin-right: auto;
+    width: 30%;
+    min-height: 5vh;
+    min-width: 12vw;
+    max-width: 20vw;
     animation: glow 0.5s ease-in-out infinite alternate;
 }
 
@@ -85,18 +121,22 @@
 }
 
 .hl {
-    position: fixed;
-    bottom: 15vh;
+    position: absolute;
+    bottom: 14vh;
     width: 100%;
     border: 0;
     height: 1px;
     background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
 }
 .vl {
+    /*    position: absolute;
+    right: 50%;*/
     position: absolute;
-    right: 50%;
+    height: 50%;
     border-left: 1px solid #f6f3f4;
-    height: 30%;
+    /*    flex-basis: 33.33%;*/
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 
@@ -112,10 +152,10 @@
 }
 
 .tathkara_logo {
-    position: fixed;
-    bottom: 5px;
+    position: absolute;
+    bottom: 10px;
     right: 10px;
-    width: 100px;
+    width: 120px;
     height: auto;
 }
 
@@ -123,7 +163,7 @@
     position: absolute;
     bottom: 10px;
     margin-bottom: 0px;
-    max-width: 10vw;
+    max-width: 6vw;
     height: auto;
     left: calc(-50vw + 50%);
     right: calc(-50vw + 50%);
@@ -133,7 +173,7 @@
 .version {
     position: fixed;
     bottom: 0px;
-    left: 0px;
+    left: 10px;
     font-size: 2vw;
     opacity: 0.5;
 }

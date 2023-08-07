@@ -1,10 +1,11 @@
-﻿@page  "/{Topic}/{TvID}/{withLogoOptions:bool}/{Lang}/tv"
+﻿@page  "/{Topic}/{TvID}/{onlineOrdersOnly:bool}/{Lang}/tv"
 @page  "/{Topic}/{TvID}/{Lang}/tv"
 @page "/tv"
 @layout EmptyLayout
 @using System.Text.Json
 @using ZUSE.Shared.Models;
 @inject IJSRuntime js
+@using ZUSE.Client.Models;
 
 @using ZUSE.Shared;
 
@@ -12,46 +13,62 @@
 <audio muted id="AudioElement" type="audio/wav">
     Your browser does not support the audio tag.
 </audio>
+
 <div class="TvPage">
     <img class="TvSPLogo" id="ServiceProviderLogo" src=@logoSource
          alt="Service provider logo">
 
-    <ul class="WaitingList">
-        <h1>
-            @WaitingText
-        </h1>
-        @foreach (var notification in WaitingList)
-        {
-            <li>@notification.order_number</li>
-        }
-
-    </ul>
-    <div class="vl"></div>
     <ul class="DoneList">
         <h1>
             @ReadyText
         </h1>
         @foreach (var notification in DoneList)
         {
-            <li>@notification.order_number</li>
+            <li>
+                <div class="notificationContainer">
+                    @if (!string.IsNullOrEmpty(notification.deliveryAppName))
+                    {
+                        <img src="@GetDeliveryAppLogo(notification.deliveryAppName)" />
+                    }
+                    @notification.displayedNumber
+                </div>
+            </li>
         }
+    </ul>
+    <div class="vl"></div>
+    <ul class="WaitingList">
+        <h1>
+            @WaitingText
+        </h1>
+        @foreach (var notification in WaitingList)
+        {
+            <li>
+                <div class="notificationContainer">
+                    @if (!string.IsNullOrEmpty(notification.deliveryAppName))
+                    {
+                        <img src="@GetDeliveryAppLogo(notification.deliveryAppName)" />
+                    }
+                    @notification.displayedNumber
+                </div>
+            </li>
+        }
+
     </ul>
 
     <hr class="hl" />
     <audio muted id="SpeechTextAudio">
         Your browser does not support the audio tag.
     </audio>
-    <div class="tathkara_logo" style="display: flex;">
-        <img class="tathkara_logo" src=@($"https://tathkarastorageaccount.blob.core.windows.net/service-providers-logos/zuse.png")
+    <div class="version">
+        V2.87
+    </div>
+    <div class="tathkara_logo">
+        <img class="tathkara_logo" src="zuse-white.png"
              alt="Service provider logo">
     </div>
-    <div class="version">
-        V2.81
-    </div>
-    @*<button class="Unmute" @onclick="speak_1">
-            إتاحة الصوت
-        </button>*@
 </div>
+
+
 
 @code
 {
@@ -62,29 +79,65 @@
     [Parameter]
     public string Lang { get; set; } = "ar";
     [Parameter]
-    public bool withLogoOptions { get; set; } = false;
+    public bool onlineOrdersOnly { get; set; } = false;
 
     public string WaitingText { get; set; } = "انتظار";
     public string ReadyText { get; set; } = "استلام";
     public string logoSource { get; set; } = string.Empty;
-    private List<Session> WaitingList { get; set; } = new();
-    private List<Session> DoneList { get; set; } = new();
-    public List<Session> notifications { get; set; } = new();
+    private List<GeneralNotificationSystemSession> WaitingList { get; set; } = new();
+    private List<GeneralNotificationSystemSession> DoneList { get; set; } = new();
+    public List<GeneralNotificationSystemSession> notifications { get; set; } = new();
 
     protected override async void OnInitialized()
     {
-        await UserCommunicationPipe.StartConnection(topic: Topic + "/tv", client_id: Topic + "/" + TvID + "/tv",
-            connected: () => { StateHasChanged(); }
-            , dissconnected: () => { });
-
-        if (Lang.Equals("en"))
+        try
         {
-            WaitingText = "Waiting";
-            ReadyText = "Ready";
+            await UserCommunicationPipe.StartConnection(topic: Topic + "/tv", client_id: Topic + "/" + TvID + "/tv",
+                connected: () => { StateHasChanged(); }
+                , dissconnected: () => { });
+
+            if (Lang.Equals("en"))
+            {
+                WaitingText = "Waiting";
+                ReadyText = "Ready";
+            }
+            logoSource = await GetLogoSource();
+            //await ConnectToWebSocket();
+            UserCommunicationPipe.AddMsgListener(MsgListener);
         }
-        logoSource = await GetLogoSource();
-        //await ConnectToWebSocket();
-        UserCommunicationPipe.AddMsgListener(MsgListener);
+        catch
+        {
+
+        }
+    }
+    private string GetDeliveryAppLogo(string name)
+    {
+        if (name.StartsWith("jah", StringComparison.CurrentCultureIgnoreCase))
+            return "jahez.png";
+        else if (name.Contains("hung", StringComparison.CurrentCultureIgnoreCase))
+            return "hungerstation.png";
+        else if (name.Contains("chefz", StringComparison.CurrentCultureIgnoreCase))
+            return "thechefz.png";
+        else if (name.Contains("mrs", StringComparison.CurrentCultureIgnoreCase))
+            return "mrsool.png";
+        return "";
+    }
+    private string GetDisplayedNumber(Session session)
+    {
+        switch (session.source)
+        {
+            case 1:
+                return session.order_number;
+            case 2:
+                //if (session.order_reference.Length > 4)
+                //    return $"..{session.order_reference?.Substring(Math.Max(0, session.order_reference.Length - 6))}";
+                //else
+                var orderReference = session.order_reference?.Split(' ');
+                if ( orderReference is not null && orderReference.Any() )
+                    return orderReference.Last();
+                return session.order_number;
+        }
+        return session.order_number;
     }
     private async Task<string> GetLogoSource()
     {
@@ -95,21 +148,63 @@
         //if (withLogoOptions)
         //return baseAddress + $"/{Topic}.png";
     }
+    private bool isOnlyOnlineOrders(Session session)
+    {
+        if (onlineOrdersOnly)
+            return session.source == 2;
+        return true;
+    }
+    private string GetDeliveryAppName(GeneralNotificationSystemSession session)
+    {
+        if (session.order_reference is null)
+            return "";
+
+        var deliveryAppNameSplitted = session.order_reference.Split(' ');
+        if (deliveryAppNameSplitted.Any())
+            return deliveryAppNameSplitted.First();
+        return "";
+    }
+    private string GetExternalNumber(GeneralNotificationSystemSession session)
+    {
+        var displayedNumber = @GetDisplayedNumber(session);
+        if (displayedNumber is null)
+            return "";
+
+        var orderReference = displayedNumber.Split(' ');
+        if (orderReference.Any())
+            return orderReference.Last();
+        return "";
+    }
     public async void MsgListener(string topic, string data)
     {
-        notifications = JsonSerializer.Deserialize<List<Session>>(data);
+        notifications = JsonSerializer.Deserialize<List<GeneralNotificationSystemSession>>(data);
 
-        var newDoneOrders = notifications?.Where(n => n.delivery_status == 2)
+        var newDoneOrders = notifications?.Where(n => n.delivery_status == 2 && isOnlyOnlineOrders(n))
             .OrderBy(n => n.closed_at.GetValueOrDefault())?.TakeLast(6).ToList();
 
-        var thereIsNoNewDoneOrder = newDoneOrders.All(o => DoneList.Any(oo => o.order_number.Equals(oo.order_number)));
+        WaitingList = notifications.Where(n => n.delivery_status != 2 && isOnlyOnlineOrders(n))?
+            .OrderBy(n => n.created_at).TakeLast(6)?.ToList();
+
+        newDoneOrders?.ForEach(
+                n => {
+                    n.order_number = n.order_number?.TrimStart('0');
+                    n.displayedNumber = GetDisplayedNumber(n);
+                    n.deliveryAppName = GetDeliveryAppName(n);
+                }
+            );
+        WaitingList?.ForEach(
+                n => {
+                    n.order_number = n.order_number?.TrimStart('0');
+                    n.displayedNumber = GetExternalNumber(n);
+                    n.deliveryAppName = GetDeliveryAppName(n);
+                }
+            );
+
+        var thereIsNoNewDoneOrder = newDoneOrders.All(o => DoneList.Any(oo => o.id.Equals(oo.id)));
         if (!thereIsNoNewDoneOrder)
         {
             await PlaySound("TvNewDoneOrder.mp3");
         }
-
-        WaitingList = notifications.Where(n => n.delivery_status != 2)?
-            .OrderBy(n => n.created_at).TakeLast(3)?.ToList();
 
         DoneList = newDoneOrders;
         StateHasChanged();

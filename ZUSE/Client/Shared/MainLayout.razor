@@ -104,8 +104,6 @@ else
 
     protected override async void OnInitialized()
     {
-        Console.WriteLine("topic: " + Topic + "  page name: " + PageName);
-
         PageNotExpired();
         NavigationManager.LocationChanged += LocationChanged;
         Order_info_valid();
@@ -114,7 +112,7 @@ else
 
     private string GetServiceProviderLogo()
     {
-        return baseImagesAddress + topic?.ToLower() + ".png";
+        return baseImagesAddress + topic + ".png";
     }
 
     public string GetBrowserId()
@@ -139,7 +137,6 @@ else
     public void LanguageIsSelected()
     {
         // replce ar routing toNavigationManager.Uri en, or vice versa
-        Console.WriteLine("topic: " + Topic + "  page name: " + PageName);
         var uri_splited = NavigationManager.Uri.Substring(NavigationManager.BaseUri.Length).Split('/');
         var updated_uri = uri_splited[uri_splited.Length - 2];
         string new_uri = "";

@@ -18,9 +18,9 @@ namespace ZUSE.Client.Models
 
             base.MobileNumberInstruction = "0571234567 : الرجاء كتابة رقم جوالك كالتالي ";
             base.LatestCall = "النداء الأخير : ";
-            base.OrderIsReadyToPick = "تفضل إلى مقدم الخدمة";
+            base.OrderIsReadyToPick = "طلبك جاهز للإستلام";
             base.Since = " منذ";
-            base.IvePickedMyOrder = "لقد حصلت على خدمتي";
+            base.IvePickedMyOrder = "تم الإستلام";
             base.GoodBye = "شكراً لإستخدامك زوس، وداعاً";
         }
     }

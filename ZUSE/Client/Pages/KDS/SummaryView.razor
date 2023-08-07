@@ -1,35 +1,94 @@
 ﻿@using ZUSE.Shared.Models;
+@using ZUSE.Client.Models;
 
 <div class="summaryView">
     <h3 style="text-align: center;">
-        SUMMARY
+        @display.summary
     </h3>
     <br />
-    @foreach (var session in sessions.sessions)
+    @foreach (var group in summary.groupedSessions)
     {
-
         <div class="singleSummary">
-            @session.quantity
-            x
-            @session.productName
-        </div>
-    }
-    <hr />
-    @foreach (var pair in sessions.orderTypeQuantitty)
-    {
+            @group.ToList().Sum(s => s.quantity)
+            <div style="font-size: 1.4vw; vertical-align: middle; display: inline-block; ">
+                x
+            </div>
+                @group.Key
 
-        <div class="singleSummary">
-            @pair.Value
-            x
-            @pair.Key
-        </div>
+                @foreach (var collection in group.ToList())
+                {
+                    @if((collection.options is not null && collection.options?.Count != 0) || !string.IsNullOrEmpty(collection.kitchen_notes))
+                        {
+                        <div class="summaryGroup">
+
+                            @collection.quantity
+
+                            <br/>
+                            <div class="summaryGroupContent">
+                                <ul style="color: hsl(207, 100%, 67%); font-size: 1.3vw;">
+                                    @collection.kitchen_notes
+                                </ul>
+                                @if (collection.options?.Count != 0)
+                                {
+                                    @foreach (var option in collection.options)
+                                    {
+                                        <ul>
+                                            <li style="color: white;">
+                                                @option.modifier_option?.name
+                                            </li>
+                                        </ul>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+           </div>
+        <hr />
     }
+    @*@foreach (var session in sessions.sessions)
+        {
+
+            <div class="singleSummary">
+                @session.quantity
+                <div style="font-size: 1.4vw; vertical-align: middle; display: inline-block; ">
+                    x
+                </div>
+                @session.productName
+                <ul style="color: hsl(207, 100%, 67%); font-size: 1.4vw;">
+                    @session.kitchen_notes
+                </ul>
+                @if (session.options is not null)
+                    @foreach (var item in session.options)
+                    {
+                        <ul>
+                            <li style="color: white;">
+                                @item.modifier_option?.name
+                            </li>
+                        </ul>
+                    }
+            </div>
+        }
+        <hr />
+        @foreach (var pair in sessions.orderTypeQuantitty)
+        {
+
+            <div class="singleSummary">
+                @pair.Value
+                x
+                @pair.Key
+            </div>
+        }*@
 </div>
 
 @code {
     private int currentCount = 0;
     [Parameter]
-    public SummerizedKdsSessions sessions { get; set; }
+    public SummerizedKdsSessions summary { get; set; }
+
+    [Parameter]
+    public omsInteraction display { get; set; }
+
 
     private void IncrementCount()
     {

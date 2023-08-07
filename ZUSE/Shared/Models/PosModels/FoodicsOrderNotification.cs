@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Microsoft.VisualBasic.FileIO;
 using ZUSE.Shared.Models;
@@ -39,6 +40,7 @@ namespace ZUSE.Shared.Models
     {
         public string uuid { get; set; }
         public User user { get; set; }
+        public int status { get; set; }
         [JsonConverter(typeof(CustomDateTimeConverter))]
         public DateTime opened_at { get; set; }
         public int type { get; set; }
@@ -92,18 +94,20 @@ namespace ZUSE.Shared.Models
     {
         public string id { get; set; } = null!;
         public int number { get; set; }
-        //public string? reference { get; set; }
+        public int? reference { get; set; }
         public int status { get; set; }
         public int? delivery_status { get; set; }
         public int type { get; set; }
         public int source { get; set; }
         public Table? table { get; set; }
         public FoodicsBranch branch { get; set; } = null!;
+        public ICollection<Payment> payments { get; set; }
         public ICollection<ProductCollection>? products { get; set; }
         public Customer? customer { get; set; }
         public ICollection<ComboCollection>? combos { get; set; }
         public object? kitchen_notes { get; set; }
         public object? customer_notes { get; set; }
+        public OrderMeta? meta { get; set; }
         public string? opened_at { get; set; }
         public string? accepted_at { get; set; }
         [JsonConverter(typeof(CustomDateTimeConverter))]
@@ -112,6 +116,29 @@ namespace ZUSE.Shared.Models
         public string? closed_at { get; set; }
     }
 
+    public class Payment
+    {
+        public PaymentMethod payment_method { get; set; }
+    }
+    public enum PaymentType
+    {
+        Cash = 1,
+        Card,
+        Other,
+        GiftCard,
+        HouseAccount,
+        Thirdparty = 7
+    }
+    public class PaymentMethod
+    {
+        public string name { get; set; }
+        public PaymentType type { get; set; }
+    }
+
+    public class OrderMeta
+    {
+        public string? external_number { get; set; }
+    }
     public class ComboCollection
     {
         public ComboSize combo_size { get; set; }
@@ -146,6 +173,77 @@ namespace ZUSE.Shared.Models
         public productMarks? stage { get; set; } = productMarks.normal;
 
         public ProductCollectionUI? ui = new();
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+                return false;
+
+            ProductCollection x = (ProductCollection)obj;
+
+            //return x.product.name.Equals(this?.product.name) && (x.kitchen_notes?.Equals(this.kitchen_notes)).GetValueOrDefault()
+            //    &&
+            //    (x.options?.All(xOp => (this.options?.Any(yOp => (yOp?.modifier_option?.name?.Equals(xOp?.modifier_option?.name)).GetValueOrDefault())).GetValueOrDefault())).GetValueOrDefault();
+            var isSameOptions = true;
+            if (this.options is not null || x.options is not null)
+                if (this.options is not null && x.options is not null)
+                    isSameOptions = (this.options?.All(xOp => (x.options?.Any(yOp => (yOp?.modifier_option?.name?.Equals(xOp?.modifier_option?.name)).GetValueOrDefault())).GetValueOrDefault())).GetValueOrDefault();
+                else
+                    isSameOptions = false;
+
+            bool isSame = this.product.name.Equals(x?.product.name) && string.Equals(x.kitchen_notes, x.kitchen_notes)
+                &&
+                isSameOptions;
+
+            return isSame;
+        }
+        //public override bool Equals(object? obj)
+        //{
+        //    //return base.Equals(obj);
+        //    var y = obj as ProductCollection;
+        //    return this.product.name.Equals(y?.product.name) && (this.kitchen_notes?.Equals(y.kitchen_notes)).GetValueOrDefault()
+        //&&
+        //(x.options?.All(xOp => (y.options?.Any(yOp => (yOp?.modifier_option?.name?.Equals(xOp?.modifier_option?.name)).GetValueOrDefault())).GetValueOrDefault())).GetValueOrDefault();
+        //}
+        //{
+        //}
+    }
+    public class CollectionsComparer : IEqualityComparer<ProductCollection>
+    {
+        // compares collections by options, names, notes, quantity
+        public bool Equals(ProductCollection? x, ProductCollection? y)
+        {
+            //return x.product.name.Equals(this?.product.name) && (x.kitchen_notes?.Equals(this.kitchen_notes)).GetValueOrDefault()
+            //    &&
+            //    (x.options?.All(xOp => (this.options?.Any(yOp => (yOp?.modifier_option?.name?.Equals(xOp?.modifier_option?.name)).GetValueOrDefault())).GetValueOrDefault())).GetValueOrDefault();
+            var isSameOptions = true;
+            if (y.options is not null || x.options is not null)
+                if (y.options is not null && x.options is not null)
+                    isSameOptions = (y.options?.All(xOp => (x.options?.Any(yOp => (yOp?.modifier_option?.name?.Equals(xOp?.modifier_option?.name)).GetValueOrDefault())).GetValueOrDefault())).GetValueOrDefault();
+                else
+                    isSameOptions = false;
+
+            bool isSame = y.product.name.Equals(x?.product.name) && string.Equals(x.kitchen_notes, x.kitchen_notes)
+                &&
+                isSameOptions
+                &&
+                y.quantity == x.quantity;
+
+            return isSame;
+        }
+
+        public int GetHashCode([DisallowNull] ProductCollection obj)
+        {
+            return base.GetHashCode();
+        }
+        bool IEqualityComparer<ProductCollection>.Equals(ProductCollection x, ProductCollection y)
+        {
+            return Equals(x, y);
+        }
+
+        int IEqualityComparer<ProductCollection>.GetHashCode(ProductCollection obj)
+        {
+            return GetHashCode(obj);
+        }
     }
     public class ProductCollectionUI
     {

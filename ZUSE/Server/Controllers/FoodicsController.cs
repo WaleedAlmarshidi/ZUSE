@@ -3,6 +3,7 @@ using System.Text.Json;
 namespace ZUSE.Server.Controllers;
 using System;
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using ZUSE.Server.Data;
 using ZUSE.Server.Managers;
@@ -10,12 +11,13 @@ using ZUSE.Server.Mappers;
 using ZUSE.Server.Services;
 using ZUSE.Shared.Models;
 
+
 [ApiController]
 [Route("foodics")]
 public class FoodicsController : Controller
 {
-    private readonly ISessionsMapper sessionsMapper;
     private readonly ZUSE_dbContext dbContext;
+    private readonly FoodicsMapper sessionsMapper;
 
     public FoodicsController(ZUSE_dbContext dbContext)
     {
@@ -34,36 +36,43 @@ public class FoodicsController : Controller
     public IResult result { get; private set; }
 
     [HttpPost]
-    public async Task<IResult> PostOrder([FromBody] FoodicsOrderNotification foodicsOrderNotification)
+    //[EarlyReturn]
+    public async Task<IActionResult> PostOrder([FromBody] FoodicsOrderNotification foodicsOrderNotification)
     {
         try
         {
             NotificationCount++;
-            //payload = JsonSerializer.Serialize(foodicsOrderNotification);
-            //var foodicsOrderNotification = JsonSerializer.Deserialize<FoodicsOrderNotification>(payload);
             if(foodicsOrderNotification is null)
             {
                 Console.WriteLine("order notification in foodics controller is null");
                 return null;
             }
-            //if (foodicsOrderNotification.order.status != 4)
-            //    return Results.Ok("Order status not accepted");
+            if(foodicsOrderNotification.order.type != 3)
+                if(foodicsOrderNotification.order.status != 4)
+                    return Ok("Order status not accepted");
             notificationMappedToTathkaraSession = sessionsMapper.MapFoodicsNotification(foodicsOrderNotification);
 
             var sessionsManager = new UserSessionsManager(dbContext);
-            result = await sessionsManager.PostNewSession(notificationMappedToTathkaraSession);
-
-            return result;
+            var existingSession = await sessionsManager.GetExistingSession(notificationMappedToTathkaraSession);
+            if (existingSession is null)
+                result = await sessionsManager.PostNewSession(notificationMappedToTathkaraSession);
+            else
+            {
+                if (notificationMappedToTathkaraSession.source == 2)
+                    result = await sessionsManager.PostOrUpdateSession(notificationMappedToTathkaraSession);
+                return Ok("Order exists");
+            }
+            return Ok();
         }
         catch (Exception ex)
         {
             Exception = ex.ToString();
-            return Results.Ok(Exception);
+            return Ok("Exception happened");
         }
     }
 
     [HttpPost("local_order")]
-    public async Task<IResult> localOrder()
+    public async Task<IActionResult> localOrder()
     {
         try
         {
@@ -79,13 +88,18 @@ public class FoodicsController : Controller
             notificationMappedToTathkaraSession = sessionsMapper.MapFoodicsNotification(y);
 
             var sessionsManager = new UserSessionsManager(dbContext);
+            if (y.order.status == 4)
+            {
+                result = await sessionsManager.EditClosedOrder(notificationMappedToTathkaraSession);
+                return Ok();
+            }
             result = await sessionsManager.PostOrUpdateSession(notificationMappedToTathkaraSession);
 
-            return result;
+            return Ok();
         }
         catch(Exception e)
         {
-            return Results.Problem(e.Message);
+            return Problem(e.Message);
         }
     }
     [HttpGet("local")]
@@ -96,18 +110,19 @@ public class FoodicsController : Controller
     [HttpGet]
     public string GetLatestOrder()
     {
-        return 
-            $"count: {NotificationCount}\n\n\n\n notification: {payload}";
+        return payload;
+            
     }
     private FoodicsOrderNotification mapLocalOrderToNotification(FoodicsLocalNetworkOrder foodicsLocalNetworkOrder)
     {
+        //var groupes = foodicsLocalNetworkOrder.order.products.GroupBy(pc => pc.product.name);
         var frnProducts = new List<ProductCollection>();
         
         foreach (var item in foodicsLocalNetworkOrder.order.products)
         {
             if (item.status == 5)
                 continue;
-
+            
             var options = new List<SingleProductOptions>();
             foreach (var option in item.options)
             {
@@ -121,7 +136,7 @@ public class FoodicsController : Controller
                     }
                 });
             }
-            frnProducts.Add(new ProductCollection
+            var newCollection = new ProductCollection
             {
                 product = new SingleProduct
                 {
@@ -131,9 +146,11 @@ public class FoodicsController : Controller
                 quantity = item.quantity,
                 kitchen_notes = item.notes,
                 options = options,
-                //stage = item.status == 5 ? productMarks.removed : item.status == 6 ? productMarks.added : productMarks.normal
-            });
+                stage = item.status == 6 ? productMarks.removed : productMarks.normal
+            };
+            frnProducts.Add(newCollection);
         }
+
         var frn = new FoodicsOrderNotification
         {
             order = new OrderInfo
@@ -145,6 +162,7 @@ public class FoodicsController : Controller
                 combos = new List<ComboCollection>(),
                 type = foodicsLocalNetworkOrder.order.type,
                 source = 1,
+                status = foodicsLocalNetworkOrder.order.status,
                 delivery_status = 1,
                 kitchen_notes = foodicsLocalNetworkOrder.order.notes,
                 customer_notes = "customer_notes",
@@ -161,6 +179,7 @@ public class FoodicsController : Controller
         };
         if (foodicsLocalNetworkOrder.order.table is not null)
             frn.order.table = new Table { name = foodicsLocalNetworkOrder.order.table?.section.name + " " + foodicsLocalNetworkOrder.order.table?.name };
+
         return frn;
     }
 }

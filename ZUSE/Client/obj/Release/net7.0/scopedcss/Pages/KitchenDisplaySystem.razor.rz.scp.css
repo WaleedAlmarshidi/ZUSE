@@ -2,7 +2,9 @@
     --officialBgColor: lightslategray;
     --cardsBgColor: #1b1c25;
 }
-
+[b-g6aada8rgd]::-webkit-scrollbar {
+    width: 0px;
+}
 body[b-g6aada8rgd] {
     display: flex;
     flex-direction: row;
@@ -67,6 +69,7 @@ body[b-g6aada8rgd] {
     background-color: #61234E;
     /*background: linear-gradient(180deg, rgba(72,3,173,1) 0%, rgba(0,85,91,1) 45%, rgba(255,255,255,0.9129428742038217) 100%);*/ /*    background-color: white;*/
     height: 100vh;
+    padding-bottom: 10px;
     /*    box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.5);*/
     width: 9vw;
     min-width: 9vw;
@@ -75,14 +78,14 @@ body[b-g6aada8rgd] {
     margin-bottom: 2.5vh;
 }
 .controlBar p[b-g6aada8rgd] {
-    margin-bottom: 2px;
+    margin-bottom: 1px;
 }
 button[b-g6aada8rgd] {
     background-color: transparent;
     color: white;
     border-width: 0px;
 }
-button:focus[b-g6aada8rgd] {
+button:focus-within[b-g6aada8rgd] {
     display: block;
 /*    display: flex;*/
     background-color: rgba(255,255,255,0.25);
@@ -116,7 +119,7 @@ button:focus[b-g6aada8rgd] {
     border-radius: 5px;
 }
 .controlBarContentContainer img[b-g6aada8rgd] {
-/*        display: block;
+    /*        display: block;
     position: relative;*/
     width: 30%;
     height: auto;
@@ -149,8 +152,13 @@ button:focus[b-g6aada8rgd] {
 .controlBarContentContainer:hover .controlbarItemTitle[b-g6aada8rgd] {
     color: white;
 }
+.controlBarImageButton[b-g6aada8rgd]{
+    width: 2em;
+    height: 2em;
+}
 .controlbarItemTitle[b-g6aada8rgd] {
     color: black;
+    font-size: 1.2em;
 }
 .button[b-g6aada8rgd] {
 }
@@ -167,4 +175,34 @@ button:focus[b-g6aada8rgd] {
 }
 
 .button:first-child[b-g6aada8rgd] {
+}
+.ordersCount[b-g6aada8rgd] {
+    display: flex;
+    flex-direction: row;
+    column-gap: 5px;
+}
+.sysVersion[b-g6aada8rgd] {
+    position: fixed;
+    color: rgba(0, 0, 0, 0.25);
+    bottom: 0px;
+    left: 5px;
+    font-size: large;
+}
+@media screen and (max-width: 1300px) {
+    /* CSS that should be displayed if width is equal to or less than 800px goes here */
+    .controlbarItemTitle[b-g6aada8rgd] {
+        font-size: 0.9em;
+    }
+}
+@media screen and (max-width: 800px) {
+    /* CSS that should be displayed if width is equal to or less than 800px goes here */
+    .controlbarItemTitle[b-g6aada8rgd] {
+        font-size: 0.4em;
+    }
+    .ordersCount[b-g6aada8rgd]{
+        font-size: 0.7em;
+    }
+    .controlBarContentContainer[b-g6aada8rgd] {
+        padding-top: 5px;
+    }
 }

@@ -17,7 +17,7 @@ namespace ZUSE.Server.Controllers
     [Route("loyverse")]
     public class LoyverseController : Controller
     {
-        private readonly ISessionsMapper sessionsMapper;
+        private readonly LoyverseMapper sessionsMapper;
         private readonly ZUSE_dbContext dbContext;
         public static string payload = "none";
         public static int i { get; set; }

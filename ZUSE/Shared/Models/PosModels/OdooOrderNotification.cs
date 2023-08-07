@@ -20,7 +20,7 @@ namespace ZUSE.Shared.Models.PosModels
         public string? table { get; set; }
         [JsonConverter(typeof(CustomDateTimeConverter))]
         public DateTime date { get; set; }
-
+        public string customer { get; set; }
         public List<OdooSingleProduct> products_details { get; set; }
     }
 

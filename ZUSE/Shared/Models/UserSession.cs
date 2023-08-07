@@ -66,6 +66,8 @@ namespace ZUSE.Shared.Models
         public List<ProductCollection>? productsCollection { get; set; }
         [NotMapped]
         public List<ComboCollection>? combosCollection { get; set; }
+        [NotMapped]
+        public Customer? customerObject { get; set; }
     }
     public class UI
     {
